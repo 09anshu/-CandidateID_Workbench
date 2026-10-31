@@ -112,3 +112,4 @@ c_1 &= c_0 - \eta \frac{\partial J}{\partial c} = 0.00000000 - (0.1)(-1.53788284
   $$\Delta w > 0, \quad \Delta b > 0, \quad \Delta v > 0, \quad \Delta c > 0$$
 - **Effect on Prediction and Loss**:  
   Increasing $w$ and $b$ drives $z$ higher, which increases hidden activation $h = \tanh(z) \in (0, 1)$. Increasing $v$ and $c$ further scales and offsets the output $\hat{y} = vh + c$ upward toward $2.0$. Evaluating the updated parameters at Step 1 yields $\hat{y}_1 \approx 0.826$ and $J_1 \approx 0.689$ (a $41.7\%$ reduction in error loss in a single step).
+

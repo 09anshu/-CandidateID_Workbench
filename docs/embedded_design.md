@@ -79,3 +79,4 @@ A critical distinction in embedded systems engineering:
    - For isolated test benches, USB galvanic isolators (e.g., ADuM4160) must be interposed between host and target devices to prevent ground loops that corrupt low-level ADC and differential signals.
 3. **Power Sequencing**:
    - FPGA core voltage ($V_{\text{CCINT}} = 1.0\text{V}$) must be brought up before or concurrently with auxiliary ($V_{\text{CCAUX}} = 1.8\text{V}$) and I/O ($V_{\text{CCO}} = 3.3\text{V}$) rails to avoid high inrush currents during configuration. The onboard TI regulators on the Arty A7 guarantee proper monotonic ramp times (<10 ms).
+

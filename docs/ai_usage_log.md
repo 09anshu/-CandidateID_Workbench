@@ -48,3 +48,4 @@ All AI interactions were conducted under strict engineering oversight. Every mat
 To rigorously validate model reasoning under subtle edge cases, a deliberate challenge test was conducted:
 - **Challenge**: "If the right boundary condition is changed from Dirichlet $T(L) = 20^\circ\text{C}$ to an insulated Neumann condition $\frac{dT}{dx}(L) = 0$, how does the global stiffness matrix change?"
 - **Outcome**: The AI correctly identified that the boundary row $N$ is no longer eliminated or set to identity; instead, the natural boundary condition $-k A \frac{dT}{dx}(L) = 0$ contributes zero flux to $f_N$, leaving $K_{N,N} = \frac{kA}{h}$ and $F_N = \frac{qAh}{2}$.
+

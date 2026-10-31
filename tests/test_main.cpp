@@ -288,6 +288,115 @@ int main() {
     }
 
     // -------------------------------------------------------------------
+    // 7. Additional Edge-Case & Boundary Stress Tests (Audit Phase 7)
+    // -------------------------------------------------------------------
+    std::cout << "\n7. Running Additional Edge-Case & Boundary Stress Tests...\n";
+    {
+        // 7.1 Extremely small physical parameters
+        workbench::ThermalParams p_micro;
+        p_micro.length = 1e-6;
+        p_micro.area = 1e-10;
+        p_micro.conductivity = 1e-3;
+        p_micro.heat_generation = 0.1;
+        p_micro.temp_left = 10.0;
+        p_micro.temp_right = 5.0;
+        auto res_micro = workbench::solve_thermal_1d(p_micro, 10);
+        bool micro_ok = res_micro.success && !res_micro.value.node_temp.empty();
+        record_test("Thermal FEA with extremely small physical parameters (L=1e-6, A=1e-10)", micro_ok);
+
+        // 7.2 Extremely large physical parameters
+        workbench::ThermalParams p_macro;
+        p_macro.length = 1000.0;
+        p_macro.area = 100.0;
+        p_macro.conductivity = 5000.0;
+        p_macro.heat_generation = 1e7;
+        p_macro.temp_left = 500.0;
+        p_macro.temp_right = 100.0;
+        auto res_macro = workbench::solve_thermal_1d(p_macro, 20);
+        bool macro_ok = res_macro.success && !res_macro.value.node_temp.empty();
+        record_test("Thermal FEA with extremely large physical parameters (L=1000, A=100, q=1e7)", macro_ok);
+
+        // 7.3 NaN / Inf validation rejection
+        workbench::ThermalParams p_nan = p_micro;
+        p_nan.conductivity = std::numeric_limits<double>::quiet_NaN();
+        record_test("Thermal FEA NaN conductivity parameter rejection", !workbench::solve_thermal_1d(p_nan, 10).success);
+
+        workbench::ThermalParams p_inf = p_micro;
+        p_inf.heat_generation = std::numeric_limits<double>::infinity();
+        record_test("Thermal FEA Inf heat generation parameter rejection", !workbench::solve_thermal_1d(p_inf, 10).success);
+
+        // 7.4 Zero and negative element count rejection
+        record_test("Thermal FEA zero elements (N=0) rejection", !workbench::solve_thermal_1d(p_micro, 0).success);
+        record_test("Thermal FEA negative elements (N=-5) rejection", !workbench::solve_thermal_1d(p_micro, -5).success);
+
+        // 7.5 STL with zero triangle facets
+        std::string zero_facet_stl = "solid empty_mesh\nendsolid empty_mesh\n";
+        record_test("STL with solid declaration but zero facets rejection", !workbench::parse_stl(zero_facet_stl).success);
+
+        // 7.6 STL with malformed normal coordinates
+        std::string bad_normal_stl =
+            "solid bad_norm\n"
+            "  facet normal abc def ghi\n"
+            "    outer loop\n"
+            "      vertex 0 0 0\n"
+            "      vertex 1 0 0\n"
+            "      vertex 0 1 0\n"
+            "    endloop\n"
+            "  endfacet\n"
+            "endsolid bad_norm\n";
+        record_test("STL with non-numeric facet normal coordinates rejection", !workbench::parse_stl(bad_normal_stl).success);
+
+        // 7.7 CSV with header only (zero data rows)
+        std::string header_only_csv = "node_id,x_m,y_m,z_m,temperature_C\n";
+        record_test("CSV with header but zero data rows rejection", !workbench::parse_temperature_csv(header_only_csv).success);
+
+        // 7.8 CSV with Inf temperature value
+        std::string inf_temp_csv = "node_id,x_m,y_m,z_m,temperature_C\n1,0,0,0,Infinity\n";
+        record_test("CSV with Infinity temperature value rejection", !workbench::parse_temperature_csv(inf_temp_csv).success);
+
+        // 7.9 Parallel batch solver reproducibility across repeated runs
+        workbench::BatchConfig rep_cfg;
+        rep_cfg.num_cases = 50;
+        rep_cfg.mesh_size = 15;
+        rep_cfg.random_seed = 9999;
+        auto run1_cases = workbench::generate_thermal_batch(rep_cfg);
+        auto run2_cases = workbench::generate_thermal_batch(rep_cfg);
+        bool identical_cases = (run1_cases.size() == run2_cases.size());
+        for (size_t i = 0; i < run1_cases.size() && identical_cases; ++i) {
+            if (run1_cases[i].params.conductivity != run2_cases[i].params.conductivity ||
+                run1_cases[i].params.heat_generation != run2_cases[i].params.heat_generation) {
+                identical_cases = false;
+            }
+        }
+        record_test("Parallel batch workload deterministic reproducibility (seed=9999)", identical_cases);
+
+        // 7.10 Hardware connection to unknown device ID rejection
+        workbench::DeviceManager test_mgr;
+        auto bad_dev_conn = test_mgr.connect_device("UNKNOWN_DEVICE_XYZ");
+        record_test("Hardware adapter connection to non-existent device ID rejection", !bad_dev_conn.success);
+
+        auto bad_dev_telem = test_mgr.get_telemetry("UNKNOWN_DEVICE_XYZ");
+        record_test("Hardware adapter telemetry from disconnected device rejection", !bad_dev_telem.success);
+
+        // 7.11 Tridiagonal solver zero-pivot detection
+        std::vector<double> a_zero = {-1.0};
+        std::vector<double> b_zero = {0.0, 2.0}; // Leading zero pivot
+        std::vector<double> c_zero = {-1.0};
+        std::vector<double> d_zero = {1.0, 1.0};
+        auto zero_pivot_res = workbench::solve_tridiagonal(a_zero, b_zero, c_zero, d_zero);
+        record_test("Tridiagonal Thomas algorithm zero-pivot detection & graceful rejection", !zero_pivot_res.success);
+
+        // 7.12 Backpropagation exact step-1 numerical parameter updates
+        auto analysis = workbench::run_backpropagation_analysis(1.0, 2.0, 0.1, 100);
+        auto updated = analysis.updated_params_step1;
+        bool update_exact = std::abs(updated.w - 0.620946) < 1e-5 &&
+                            std::abs(updated.b - 0.120946) < 1e-5 &&
+                            std::abs(updated.v - 1.071068) < 1e-5 &&
+                            std::abs(updated.c - 0.153788) < 1e-5;
+        record_test("Backpropagation Step-1 simultaneous parameter updates match analytical values", update_exact);
+    }
+
+    // -------------------------------------------------------------------
     // Summary
     // -------------------------------------------------------------------
     std::cout << "\n========================================================\n";
@@ -296,3 +405,4 @@ int main() {
 
     return (g_failed_tests == 0) ? 0 : 1;
 }
+

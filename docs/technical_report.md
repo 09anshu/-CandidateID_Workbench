@@ -210,3 +210,4 @@ The built-in automated test runner (`tests/test_main.cpp`) exercises 28 distinct
 1. **Geometry Support**: Limited to ASCII STL format. Binary STL files are detected and rejected with explicit instructions. Native commercial solid formats (STEP/IGES) are outside prototype scope.
 2. **Thermal Dimensionality**: Formulated specifically for 1-D steady-state rods. Multi-dimensional 2D/3D solid conduction is not solved.
 3. **Hardware Realization**: Embedded adapters are mock software emulators; physical hardware is not addressed.
+
