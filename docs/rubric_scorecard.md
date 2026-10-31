@@ -102,3 +102,4 @@
 | **Working C++ Backend Binary** | Mandatory | **VERIFIED** (`workbench_backend.exe`) | **PASSED** |
 | **Successful Standalone Launch** | Mandatory | **VERIFIED** (`Launch.exe` in clean directory) | **PASSED** |
 | **OVERALL SHORTLISTING STATUS** | — | — | **STRONG INTERVIEW SHORTLIST** |
+

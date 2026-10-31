@@ -9,3 +9,4 @@ if (!(Test-Path $launchExe)) {
 
 Write-Host "Starting PASS SCIENCE WORKS Workbench via Launch.exe..." -ForegroundColor Cyan
 Start-Process -FilePath $launchExe
+

@@ -99,3 +99,4 @@ plt.tight_layout()
 plt.savefig("results/plots/backpropagation_loss_curve.png")
 plt.close()
 print("Saved backpropagation_loss_curve.png")
+

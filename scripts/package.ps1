@@ -71,3 +71,4 @@ Remove-Item $stageDir -Recurse -Force
 
 $zipInfo = Get-Item $zipPath
 Write-Host "Successfully generated: $($zipInfo.FullName) ($([math]::Round($zipInfo.Length / 1MB, 2)) MB)" -ForegroundColor Green
+

@@ -60,3 +60,4 @@ A complete, systematic inspection of all components across the workspace was con
    - None.
 4. **Known Environmental Assumptions:**
    - Standalone `Launch.exe` relies on Windows Win32 API (`CreateProcessW`, `ShellExecuteW`, `WSASocketW`). On non-Windows platforms (Linux/macOS), the backend is compiled with standard POSIX sockets via CMake (`cmake -DCMAKE_BUILD_TYPE=Release ..`).
+

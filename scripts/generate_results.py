@@ -65,3 +65,4 @@ train_csv_resp = urllib.request.urlopen('http://127.0.0.1:8080/api/v1/backprop/e
 with open('results/csv/backpropagation_training_100steps.csv', 'w', encoding='utf-8') as f:
     f.write(train_csv_resp.read().decode('utf-8'))
 print("Successfully generated results/csv/backpropagation_training_100steps.csv")
+
