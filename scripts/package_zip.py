@@ -13,6 +13,7 @@ if os.path.exists(zip_path):
 include_items = [
     "Launch.exe",
     "workbench_backend.exe",
+    "workbench_tests.exe",
     "libgcc_s_seh-1.dll",
     "libstdc++-6.dll",
     "libwinpthread-1.dll",
@@ -66,3 +67,4 @@ with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as zi
 
 zip_size_mb = os.path.getsize(zip_path) / (1024 * 1024)
 print(f"Successfully packaged CandidateID_Workbench.zip ({zip_size_mb:.2f} MB)")
+

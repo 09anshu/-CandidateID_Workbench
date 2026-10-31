@@ -47,7 +47,7 @@ export default function WorkbenchApp() {
   const [geoLoading, setGeoLoading] = useState(false);
 
   // Thermal FEA state
-  const [thermalParams, setThermalParams] = useState({
+  const [thermalParams, setThermalParams] = useState<Record<string, any>>({
     length: 1.0,
     area: 0.0001,
     conductivity: 10.0,
@@ -62,9 +62,13 @@ export default function WorkbenchApp() {
   const [thermalError, setThermalError] = useState<string | null>(null);
 
   // Multicore performance state
-  const [benchConfig, setBenchConfig] = useState({
-    num_cases: 500,
-    mesh_size: 40,
+  const [benchConfig, setBenchConfig] = useState<{
+    num_cases: number | string;
+    mesh_size: number | string;
+    random_seed: number | string;
+  }>({
+    num_cases: 100,
+    mesh_size: 20,
     random_seed: 42,
   });
   const [benchReport, setBenchReport] = useState<BenchmarkReport | null>(null);
@@ -295,9 +299,18 @@ endsolid cube`;
     setThermalLoading(true);
     setThermalError(null);
     try {
-      const res = await api.solveThermal(thermalParams);
+      const parsedParams = {
+        length: parseFloat(String(thermalParams.length)) || 1.0,
+        area: parseFloat(String(thermalParams.area)) || 0.0001,
+        conductivity: parseFloat(String(thermalParams.conductivity)) || 10.0,
+        heat_generation: parseFloat(String(thermalParams.heat_generation)) || 0.0,
+        temp_left: parseFloat(String(thermalParams.temp_left)) || 0.0,
+        temp_right: parseFloat(String(thermalParams.temp_right)) || 0.0,
+        num_elements: parseInt(String(thermalParams.num_elements), 10) || 40,
+      };
+      const res = await api.solveThermal(parsedParams);
       setThermalResult(res);
-      const conv = await api.runConvergence(thermalParams);
+      const conv = await api.runConvergence(parsedParams);
       setConvergenceResult(conv);
     } catch (e: any) {
       setThermalError(e.message);
@@ -310,11 +323,10 @@ endsolid cube`;
   const handleRunBenchmark = async () => {
     setBenchLoading(true);
     try {
-      const res = await api.runBenchmark(
-        benchConfig.num_cases,
-        benchConfig.mesh_size,
-        benchConfig.random_seed
-      );
+      const numCases = parseInt(String(benchConfig.num_cases), 10) || 100;
+      const meshSize = parseInt(String(benchConfig.mesh_size), 10) || 20;
+      const seed = parseInt(String(benchConfig.random_seed), 10) || 42;
+      const res = await api.runBenchmark(numCases, meshSize, seed);
       setBenchReport(res);
     } catch (e: any) {
       alert("Benchmark failed: " + e.message);
@@ -637,8 +649,9 @@ endsolid cube`;
                     <label className="text-slate-400 block mb-1">Length L (m)</label>
                     <input
                       type="number"
+                      step="any"
                       value={thermalParams.length}
-                      onChange={(e) => setThermalParams({ ...thermalParams, length: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => setThermalParams({ ...thermalParams, length: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
                     />
                   </div>
@@ -646,9 +659,9 @@ endsolid cube`;
                     <label className="text-slate-400 block mb-1">Area A (m²)</label>
                     <input
                       type="number"
-                      step="0.00001"
+                      step="any"
                       value={thermalParams.area}
-                      onChange={(e) => setThermalParams({ ...thermalParams, area: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => setThermalParams({ ...thermalParams, area: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
                     />
                   </div>
@@ -656,8 +669,9 @@ endsolid cube`;
                     <label className="text-slate-400 block mb-1">Conductivity k (W/m·K)</label>
                     <input
                       type="number"
+                      step="any"
                       value={thermalParams.conductivity}
-                      onChange={(e) => setThermalParams({ ...thermalParams, conductivity: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => setThermalParams({ ...thermalParams, conductivity: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
                     />
                   </div>
@@ -665,8 +679,9 @@ endsolid cube`;
                     <label className="text-slate-400 block mb-1">Heat Gen q (W/m³)</label>
                     <input
                       type="number"
+                      step="any"
                       value={thermalParams.heat_generation}
-                      onChange={(e) => setThermalParams({ ...thermalParams, heat_generation: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => setThermalParams({ ...thermalParams, heat_generation: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
                     />
                   </div>
@@ -674,8 +689,9 @@ endsolid cube`;
                     <label className="text-slate-400 block mb-1">T(0) Left (°C)</label>
                     <input
                       type="number"
+                      step="any"
                       value={thermalParams.temp_left}
-                      onChange={(e) => setThermalParams({ ...thermalParams, temp_left: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => setThermalParams({ ...thermalParams, temp_left: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
                     />
                   </div>
@@ -683,8 +699,9 @@ endsolid cube`;
                     <label className="text-slate-400 block mb-1">T(L) Right (°C)</label>
                     <input
                       type="number"
+                      step="any"
                       value={thermalParams.temp_right}
-                      onChange={(e) => setThermalParams({ ...thermalParams, temp_right: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => setThermalParams({ ...thermalParams, temp_right: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
                     />
                   </div>
@@ -812,8 +829,10 @@ endsolid cube`;
                     <label className="text-slate-400 block mb-1">Workload Cases (Batch Size)</label>
                     <input
                       type="number"
+                      step="1"
+                      min="1"
                       value={benchConfig.num_cases}
-                      onChange={(e) => setBenchConfig({ ...benchConfig, num_cases: parseInt(e.target.value) || 100 })}
+                      onChange={(e) => setBenchConfig({ ...benchConfig, num_cases: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
                     />
                   </div>
@@ -821,8 +840,10 @@ endsolid cube`;
                     <label className="text-slate-400 block mb-1">Mesh Elements per Case</label>
                     <input
                       type="number"
+                      step="1"
+                      min="2"
                       value={benchConfig.mesh_size}
-                      onChange={(e) => setBenchConfig({ ...benchConfig, mesh_size: parseInt(e.target.value) || 20 })}
+                      onChange={(e) => setBenchConfig({ ...benchConfig, mesh_size: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
                     />
                   </div>
@@ -830,8 +851,9 @@ endsolid cube`;
                     <label className="text-slate-400 block mb-1">Fixed Random Seed (Reproducibility)</label>
                     <input
                       type="number"
+                      step="1"
                       value={benchConfig.random_seed}
-                      onChange={(e) => setBenchConfig({ ...benchConfig, random_seed: parseInt(e.target.value) || 42 })}
+                      onChange={(e) => setBenchConfig({ ...benchConfig, random_seed: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
                     />
                   </div>
@@ -1190,3 +1212,4 @@ endsolid cube`;
     </div>
   );
 }
+
