@@ -1,0 +1,27 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build C++ Backend",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/src/backend/build && cmake .. -G \"MinGW Makefiles\" && cmake --build . --config Release",
+            "group": "build",
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "Run Backend Tests",
+            "type": "shell",
+            "command": "${workspaceFolder}/src/backend/build/workbench_tests.exe",
+            "group": "test",
+            "dependsOn": "Build C++ Backend"
+        },
+        {
+            "label": "Start Frontend Dev",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/src/frontend && npm run dev",
+            "group": "none",
+            "isBackground": true
+        }
+    ]
+}
+

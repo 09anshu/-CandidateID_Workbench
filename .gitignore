@@ -1,0 +1,52 @@
+# Build outputs
+build/
+dist/
+out/
+*.exe
+*.obj
+*.o
+*.d
+*.dll
+*.lib
+*.a
+*.pdb
+*.ilk
+*.exp
+
+# Node.js
+node_modules/
+.next/
+.turbo/
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary
+tmp/
+temp/
+
+# Package archives (keep the final submission zip separate)
+*.zip
+
+# Python cache
+__pycache__/
+*.pyc
+
