@@ -1,0 +1,6 @@
+# PASS SCIENCE WORKS - Thermal Mesh Convergence Study
+elements_N,mesh_size_h_m,max_midpoint_error_C,l2_error_C,convergence_rate
+10,0.100000,1.25000000,1.25000000,0.0000
+20,0.050000,0.31250000,0.31250000,2.0000
+40,0.025000,0.07812500,0.07812500,2.0000
+80,0.012500,0.01953125,0.01953125,2.0000
