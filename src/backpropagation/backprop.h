@@ -76,3 +76,4 @@ BackpropResult run_backpropagation_analysis(double x = 1.0, double y = 2.0, doub
 std::string export_training_csv(const BackpropResult& result);
 
 } // namespace workbench
+

@@ -1,22 +1,31 @@
-# Build outputs
+# Build outputs & binaries
 build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
 dist/
 out/
 *.exe
+*.dll
 *.obj
 *.o
 *.d
-*.dll
-*.lib
-*.a
 *.pdb
 *.ilk
 *.exp
+*.lib
+*.a
 
 # Node.js
 node_modules/
 .next/
 .turbo/
+
+# Python & Virtual Environments
+__pycache__/
+*.pyc
+.venv/
+venv/
 
 # IDE
 .vscode/settings.json
@@ -30,23 +39,20 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 
-# Environment
+# Environment & Secrets
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
-# Logs
+# Logs (exempting test evidence in results/)
 *.log
+!results/*.log
 npm-debug.log*
 
 # Temporary
 tmp/
 temp/
 
-# Package archives (keep the final submission zip separate)
+# Package archives
 *.zip
-
-# Python cache
-__pycache__/
-*.pyc
 

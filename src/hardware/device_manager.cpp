@@ -81,3 +81,4 @@ void DeviceManager::reset_all() {
 }
 
 } // namespace workbench
+

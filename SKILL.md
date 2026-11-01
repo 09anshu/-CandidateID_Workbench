@@ -65,3 +65,4 @@ g++.exe -O3 -mwindows src/backend/launcher.cpp -o Launch.exe
 5. Expose REST API endpoint in `src/backend/server_routes.cpp`.
 6. Add corresponding TypeScript API client function in `src/frontend/lib/api.ts`.
 7. Rebuild backend and run tests to verify zero regressions.
+

@@ -49,3 +49,4 @@ target_include_directories(workbench_tests PRIVATE ${ROOT_DIR}/src)
 if(WIN32)
     target_link_libraries(workbench_tests PRIVATE ws2_32)
 endif()
+

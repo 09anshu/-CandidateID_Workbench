@@ -116,3 +116,4 @@ void FpgaAdapter::set_fault_injection(bool enable_timeout) {
 }
 
 } // namespace workbench
+

@@ -126,3 +126,4 @@ void JtagAdapter::set_fault_injection(bool enable_timeout) {
 }
 
 } // namespace workbench
+

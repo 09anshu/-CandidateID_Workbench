@@ -354,3 +354,4 @@ export default function ThreeViewer({ stlData, pointCloudData }: ThreeViewerProp
     </div>
   );
 }
+

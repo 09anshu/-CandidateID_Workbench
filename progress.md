@@ -74,3 +74,12 @@
    - Rebuilt Next.js production bundle, updated `ui/`, and packaged final submission archive `CandidateID_Workbench.zip` (3.09 MB).
    - Official Rubric Score: **100.0 / 100.0 (Strong Interview Shortlist)**.
 
+8. **Automated Testing Dashboard, GoogleTest/CTest Integration & Demonstration Video (2026-11-01)**:
+   - Integrated GoogleTest 1.18.0 and CTest into root `CMakeLists.txt` via `enable_testing()` and `gtest_discover_tests()`.
+   - Implemented `tests/gtest_suite.cpp`: 28 GoogleTest test cases across 8 test suites covering STL parsing, CSV parsing, Dirichlet BCs, analytical FEM accuracy, quadratic mesh convergence, serial vs parallel determinism, embedded hardware mock lifecycle/timeout, and backpropagation finite-difference gradient checks. **Result: 28/28 passed**.
+   - Created backend test runner engine (`src/backend/test_runner.cpp`, `test_runner.h`) with concurrency protection (atomic mutex) and zero arbitrary command injection, emitting real JUnit XML (`results/test_report.xml`) and console logs (`results/test_execution.log`).
+   - Built dedicated Next.js Testing & Validation dashboard tab in `src/frontend/app/page.tsx` with live run triggers, metric cards, test case table, console terminal window, and XML/log download buttons.
+   - Fixed numeric input editing across all views (replaced constrained number steppers with unconstrained text inputs with numeric input modes, eliminating mouse-wheel scroll hijacking).
+   - Added official demonstration video link and detailed technical sections to root `README.md`.
+
+

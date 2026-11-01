@@ -194,6 +194,31 @@ export interface BackpropTrainResult {
   error?: string;
 }
 
+export interface TestCaseResult {
+  suite: string;
+  name: string;
+  status: "PASSED" | "FAILED" | "SKIPPED";
+  duration_ms: number;
+  failure_message: string;
+}
+
+export interface TestSuiteRunResult {
+  success: boolean;
+  executed: boolean;
+  exit_code: number;
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+  duration_ms: number;
+  timestamp: string;
+  xml_path: string;
+  log_path: string;
+  error?: string;
+  console_output: string;
+  tests: TestCaseResult[];
+}
+
 // ---------------------------------------------------------------------------
 // HTTP API Client Implementation
 // ---------------------------------------------------------------------------
@@ -291,4 +316,15 @@ export const api = {
     }),
 
   exportBackpropCsvUrl: () => `${API_BASE}/backprop/export/csv`,
+
+  runTests: () =>
+    fetchJson<TestSuiteRunResult>(`${API_BASE}/tests/run`, {
+      method: "POST",
+    }),
+
+  getLatestTests: () => fetchJson<TestSuiteRunResult>(`${API_BASE}/tests/latest`),
+
+  exportTestXmlUrl: () => `${API_BASE}/tests/export/xml`,
+  exportTestLogUrl: () => `${API_BASE}/tests/export/log`,
 };
+

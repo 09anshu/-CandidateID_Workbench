@@ -31,10 +31,11 @@ set(BACKEND_SOURCES
     ${CORE_SOURCES}
     src/backend/http_server.cpp
     src/backend/server_routes.cpp
+    src/backend/test_runner.cpp
     src/backend/main.cpp
 )
 
-# Test sources
+# Custom test sources
 set(TEST_SOURCES
     ${CORE_SOURCES}
     tests/test_main.cpp
@@ -47,12 +48,29 @@ if(WIN32)
     target_link_libraries(workbench_backend PRIVATE ws2_32)
 endif()
 
-# Test Executable
+# Custom Lightweight Test Executable
 add_executable(workbench_tests ${TEST_SOURCES})
 target_include_directories(workbench_tests PRIVATE src)
 if(WIN32)
     target_link_libraries(workbench_tests PRIVATE ws2_32)
 endif()
 
+# GoogleTest Integration
+find_package(GTest REQUIRED)
+include(GoogleTest)
+
+set(GTEST_SOURCES
+    ${CORE_SOURCES}
+    tests/gtest_suite.cpp
+)
+
+add_executable(workbench_gtests ${GTEST_SOURCES})
+target_include_directories(workbench_gtests PRIVATE src)
+target_link_libraries(workbench_gtests PRIVATE GTest::GTest GTest::Main)
+if(WIN32)
+    target_link_libraries(workbench_gtests PRIVATE ws2_32)
+endif()
+
 enable_testing()
-add_test(NAME AllUnitAndIntegrationTests COMMAND workbench_tests)
+add_test(NAME ComprehensiveCustomTests COMMAND workbench_tests)
+gtest_discover_tests(workbench_gtests XML_OUTPUT_DIR "${CMAKE_BINARY_DIR}/results")

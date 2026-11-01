@@ -17,6 +17,13 @@ import {
   Upload,
   Server,
   Zap,
+  CheckSquare,
+  XCircle,
+  Clock,
+  Terminal,
+  FileText,
+  RefreshCw,
+  Copy,
 } from "lucide-react";
 import ThreeViewer from "@/components/viewers/ThreeViewer";
 import ScientificChart, { DataSeries } from "@/components/charts/ScientificChart";
@@ -33,10 +40,12 @@ import {
   DeviceTelemetry,
   BackpropComputeResult,
   BackpropTrainResult,
+  TestSuiteRunResult,
+  TestCaseResult,
 } from "@/lib/api";
 
 export default function WorkbenchApp() {
-  const [activeTab, setActiveTab] = useState<"geometry" | "thermal" | "performance" | "hardware" | "backprop" | "docs">("geometry");
+  const [activeTab, setActiveTab] = useState<"geometry" | "thermal" | "performance" | "hardware" | "backprop" | "tests" | "docs">("geometry");
   const [backendOnline, setBackendOnline] = useState<boolean>(false);
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
 
@@ -87,6 +96,15 @@ export default function WorkbenchApp() {
   const [backpropTrain, setBackpropTrain] = useState<BackpropTrainResult | null>(null);
   const [backpropLoading, setBackpropLoading] = useState(false);
 
+  // Automated testing & validation state
+  const [testResult, setTestResult] = useState<TestSuiteRunResult | null>(null);
+  const [testLoading, setTestLoading] = useState(false);
+  const [testFilter, setTestFilter] = useState<"ALL" | "PASSED" | "FAILED">("ALL");
+  const [testSearch, setTestSearch] = useState("");
+  const [testOutputExpanded, setTestOutputExpanded] = useState(true);
+  const [testRunningStatus, setTestRunningStatus] = useState<string>("");
+  const [copiedLog, setCopiedLog] = useState(false);
+
   // Periodic health & system polling
   useEffect(() => {
     const checkStatus = async () => {
@@ -112,6 +130,46 @@ export default function WorkbenchApp() {
       fetchDevices();
     }
   }, [activeTab]);
+
+  // Auto-fetch latest tests when tests tab is opened
+  useEffect(() => {
+    if (activeTab === "tests" && !testResult && !testLoading) {
+      fetchLatestTests();
+    }
+  }, [activeTab]);
+
+  const fetchLatestTests = async () => {
+    try {
+      const res = await api.getLatestTests();
+      if (res && res.total > 0) {
+        setTestResult(res);
+      }
+    } catch {
+      // Ignored if not yet executed
+    }
+  };
+
+  const handleRunTests = async () => {
+    setTestLoading(true);
+    setTestRunningStatus("Executing GoogleTest & CTest suite via backend...");
+    try {
+      const res = await api.runTests();
+      setTestResult(res);
+    } catch (e: any) {
+      alert("Test Execution Error: " + e.message);
+    } finally {
+      setTestLoading(false);
+      setTestRunningStatus("");
+    }
+  };
+
+  const handleCopyConsole = () => {
+    if (testResult?.console_output) {
+      navigator.clipboard.writeText(testResult.console_output);
+      setCopiedLog(true);
+      setTimeout(() => setCopiedLog(false), 2000);
+    }
+  };
 
   const fetchDevices = async () => {
     try {
@@ -323,9 +381,9 @@ endsolid cube`;
   const handleRunBenchmark = async () => {
     setBenchLoading(true);
     try {
-      const numCases = parseInt(String(benchConfig.num_cases), 10) || 100;
-      const meshSize = parseInt(String(benchConfig.mesh_size), 10) || 20;
-      const seed = parseInt(String(benchConfig.random_seed), 10) || 42;
+      const numCases = Math.max(1, parseInt(String(benchConfig.num_cases).trim(), 10) || 100);
+      const meshSize = Math.max(2, parseInt(String(benchConfig.mesh_size).trim(), 10) || 20);
+      const seed = parseInt(String(benchConfig.random_seed).trim(), 10) || 42;
       const res = await api.runBenchmark(numCases, meshSize, seed);
       setBenchReport(res);
     } catch (e: any) {
@@ -458,6 +516,18 @@ endsolid cube`;
             </button>
 
             <button
+              onClick={() => setActiveTab("tests")}
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-medium transition ${
+                activeTab === "tests"
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+                  : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+              }`}
+            >
+              <CheckSquare className="w-4 h-4" />
+              <span>Validation & Tests</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab("docs")}
               className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-medium transition ${
                 activeTab === "docs"
@@ -507,6 +577,7 @@ endsolid cube`;
               {activeTab === "performance" && "Multicore Worker Pool Benchmark & Scalability"}
               {activeTab === "hardware" && "Embedded Workbench: MCU, FPGA, and JTAG Probe"}
               {activeTab === "backprop" && "Handwritten Neural Backpropagation & Gradient Check"}
+              {activeTab === "tests" && "Automated Testing & Validation Suite (GoogleTest & CTest)"}
               {activeTab === "docs" && "Technical Report & Verification Deliverables"}
             </span>
           </div>
@@ -648,61 +719,61 @@ endsolid cube`;
                   <div>
                     <label className="text-slate-400 block mb-1">Length L (m)</label>
                     <input
-                      type="number"
-                      step="any"
+                      type="text"
+                      inputMode="decimal"
                       value={thermalParams.length}
                       onChange={(e) => setThermalParams({ ...thermalParams, length: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-blue-500"
                     />
                   </div>
                   <div>
                     <label className="text-slate-400 block mb-1">Area A (m²)</label>
                     <input
-                      type="number"
-                      step="any"
+                      type="text"
+                      inputMode="decimal"
                       value={thermalParams.area}
                       onChange={(e) => setThermalParams({ ...thermalParams, area: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-blue-500"
                     />
                   </div>
                   <div>
                     <label className="text-slate-400 block mb-1">Conductivity k (W/m·K)</label>
                     <input
-                      type="number"
-                      step="any"
+                      type="text"
+                      inputMode="decimal"
                       value={thermalParams.conductivity}
                       onChange={(e) => setThermalParams({ ...thermalParams, conductivity: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-blue-500"
                     />
                   </div>
                   <div>
                     <label className="text-slate-400 block mb-1">Heat Gen q (W/m³)</label>
                     <input
-                      type="number"
-                      step="any"
+                      type="text"
+                      inputMode="decimal"
                       value={thermalParams.heat_generation}
                       onChange={(e) => setThermalParams({ ...thermalParams, heat_generation: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-blue-500"
                     />
                   </div>
                   <div>
                     <label className="text-slate-400 block mb-1">T(0) Left (°C)</label>
                     <input
-                      type="number"
-                      step="any"
+                      type="text"
+                      inputMode="decimal"
                       value={thermalParams.temp_left}
                       onChange={(e) => setThermalParams({ ...thermalParams, temp_left: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-blue-500"
                     />
                   </div>
                   <div>
                     <label className="text-slate-400 block mb-1">T(L) Right (°C)</label>
                     <input
-                      type="number"
-                      step="any"
+                      type="text"
+                      inputMode="decimal"
                       value={thermalParams.temp_right}
                       onChange={(e) => setThermalParams({ ...thermalParams, temp_right: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-blue-500"
                     />
                   </div>
                   <div>
@@ -710,7 +781,7 @@ endsolid cube`;
                     <select
                       value={thermalParams.num_elements}
                       onChange={(e) => setThermalParams({ ...thermalParams, num_elements: parseInt(e.target.value) })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-blue-500"
                     >
                       <option value={10}>N = 10</option>
                       <option value={20}>N = 20</option>
@@ -828,33 +899,34 @@ endsolid cube`;
                   <div>
                     <label className="text-slate-400 block mb-1">Workload Cases (Batch Size)</label>
                     <input
-                      type="number"
-                      step="1"
-                      min="1"
+                      type="text"
+                      inputMode="numeric"
                       value={benchConfig.num_cases}
                       onChange={(e) => setBenchConfig({ ...benchConfig, num_cases: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-blue-500 font-mono"
+                      placeholder="e.g. 100"
                     />
                   </div>
                   <div>
                     <label className="text-slate-400 block mb-1">Mesh Elements per Case</label>
                     <input
-                      type="number"
-                      step="1"
-                      min="2"
+                      type="text"
+                      inputMode="numeric"
                       value={benchConfig.mesh_size}
                       onChange={(e) => setBenchConfig({ ...benchConfig, mesh_size: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-blue-500 font-mono"
+                      placeholder="e.g. 20"
                     />
                   </div>
                   <div>
                     <label className="text-slate-400 block mb-1">Fixed Random Seed (Reproducibility)</label>
                     <input
-                      type="number"
-                      step="1"
+                      type="text"
+                      inputMode="numeric"
                       value={benchConfig.random_seed}
                       onChange={(e) => setBenchConfig({ ...benchConfig, random_seed: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200"
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-blue-500 font-mono"
+                      placeholder="e.g. 42"
                     />
                   </div>
                 </div>
@@ -1171,7 +1243,313 @@ endsolid cube`;
           )}
 
           {/* ========================================================================= */}
-          {/* TAB 6: DOCUMENTATION & REPORT */}
+          {/* TAB 6: AUTOMATED TESTING & VALIDATION (GOOGLETEST & CTEST) */}
+          {/* ========================================================================= */}
+          {activeTab === "tests" && (
+            <div className="space-y-6">
+              {/* Header & Execution Toolbar */}
+              <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                      <CheckSquare className="w-5 h-5 text-blue-400" />
+                      <span>GoogleTest & CTest Automated Validation Suite</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Executes native C++ unit & integration tests covering Geometry, Thermal FEM, Multicore, Embedded Hardware, and Backpropagation.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center space-x-2.5">
+                    <button
+                      onClick={handleRunTests}
+                      disabled={testLoading}
+                      className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs px-4 py-2.5 rounded-lg font-semibold transition shadow-md shadow-blue-600/20 flex items-center space-x-2"
+                    >
+                      {testLoading ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          <span>Running Test Suite...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-4 h-4" />
+                          <span>Run Test Suite</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={fetchLatestTests}
+                      disabled={testLoading}
+                      title="Reload latest test results from disk"
+                      className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-2.5 rounded-lg font-medium transition border border-slate-700 flex items-center space-x-1.5"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Reload</span>
+                    </button>
+
+                    <a
+                      href={api.exportTestXmlUrl()}
+                      download="test_report.xml"
+                      className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-2.5 rounded-lg font-medium transition border border-slate-700 flex items-center space-x-1.5"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>JUnit XML</span>
+                    </a>
+
+                    <a
+                      href={api.exportTestLogUrl()}
+                      download="test_execution.log"
+                      className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-2.5 rounded-lg font-medium transition border border-slate-700 flex items-center space-x-1.5"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Log</span>
+                    </a>
+                  </div>
+                </div>
+
+                {/* Real-time Status Notification */}
+                {testLoading && (
+                  <div className="bg-amber-950/40 border border-amber-800 text-amber-300 px-4 py-3 rounded-lg text-xs flex items-center space-x-2.5 animate-pulse">
+                    <RefreshCw className="w-4 h-4 animate-spin text-amber-400" />
+                    <span className="font-medium">{testRunningStatus || "Executing GoogleTest & CTest suite via backend..."}</span>
+                  </div>
+                )}
+
+                {testResult && !testLoading && (
+                  <div
+                    className={`px-4 py-3 rounded-lg text-xs flex items-center justify-between border ${
+                      testResult.failed === 0 && testResult.executed
+                        ? "bg-emerald-950/40 border-emerald-800 text-emerald-300"
+                        : "bg-red-950/40 border-red-800 text-red-300"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      {testResult.failed === 0 && testResult.executed ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-red-400" />
+                      )}
+                      <span className="font-semibold">
+                        {testResult.failed === 0 && testResult.executed
+                          ? `All Test Suites Passed (${testResult.passed} / ${testResult.total} test cases succeeded)`
+                          : `Failures Detected: ${testResult.failed} failed out of ${testResult.total} tests`}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-400 font-mono">
+                      Exit Code: {testResult.exit_code} | Duration: {testResult.duration_ms.toFixed(1)} ms | Timestamp: {testResult.timestamp || "Just now"}
+                    </div>
+                  </div>
+                )}
+
+                {/* Test Metrics Overview Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                  <div className="bg-slate-950 p-3.5 rounded-lg border border-slate-800">
+                    <div className="text-slate-400 mb-1 flex items-center justify-between">
+                      <span>Total Test Cases</span>
+                      <CheckSquare className="w-3.5 h-3.5 text-blue-400" />
+                    </div>
+                    <div className="text-xl font-bold text-slate-100 font-mono">
+                      {testResult ? testResult.total : 0}
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-1">
+                      {testResult ? `${testResult.duration_ms.toFixed(1)} ms total time` : "No tests executed"}
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-950 p-3.5 rounded-lg border border-slate-800">
+                    <div className="text-slate-400 mb-1 flex items-center justify-between">
+                      <span>Passed</span>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    </div>
+                    <div className="text-xl font-bold text-emerald-400 font-mono">
+                      {testResult ? testResult.passed : 0}
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-1">
+                      {testResult && testResult.total > 0
+                        ? `${((testResult.passed / testResult.total) * 100).toFixed(0)}% pass rate`
+                        : "Ready to run"}
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-950 p-3.5 rounded-lg border border-slate-800">
+                    <div className="text-slate-400 mb-1 flex items-center justify-between">
+                      <span>Failed</span>
+                      <XCircle className="w-3.5 h-3.5 text-red-400" />
+                    </div>
+                    <div className={`text-xl font-bold font-mono ${testResult?.failed ? "text-red-400" : "text-slate-100"}`}>
+                      {testResult ? testResult.failed : 0}
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-1">
+                      {testResult?.failed === 0 ? "Zero regressions" : "Investigation required"}
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-950 p-3.5 rounded-lg border border-slate-800">
+                    <div className="text-slate-400 mb-1 flex items-center justify-between">
+                      <span>Skipped / Filtered</span>
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    </div>
+                    <div className="text-xl font-bold text-slate-400 font-mono">
+                      {testResult ? testResult.skipped : 0}
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-1">
+                      JUnit XML verified
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Table of Test Cases & Results */}
+              {testResult && testResult.tests && testResult.tests.length > 0 && (
+                <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+                  <div className="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs font-semibold text-slate-200">Test Execution Details</span>
+                      <span className="text-[11px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">
+                        {testResult.tests.length} tests
+                      </span>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      {/* Filter pills */}
+                      <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs">
+                        <button
+                          onClick={() => setTestFilter("ALL")}
+                          className={`px-2.5 py-1 rounded font-medium transition ${
+                            testFilter === "ALL" ? "bg-blue-600 text-white" : "text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          All ({testResult.total})
+                        </button>
+                        <button
+                          onClick={() => setTestFilter("PASSED")}
+                          className={`px-2.5 py-1 rounded font-medium transition ${
+                            testFilter === "PASSED" ? "bg-emerald-600 text-white" : "text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          Passed ({testResult.passed})
+                        </button>
+                        <button
+                          onClick={() => setTestFilter("FAILED")}
+                          className={`px-2.5 py-1 rounded font-medium transition ${
+                            testFilter === "FAILED" ? "bg-red-600 text-white" : "text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          Failed ({testResult.failed})
+                        </button>
+                      </div>
+
+                      {/* Search input */}
+                      <input
+                        type="text"
+                        placeholder="Search tests..."
+                        value={testSearch}
+                        onChange={(e) => setTestSearch(e.target.value)}
+                        className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 w-44"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="max-h-96 overflow-y-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-950/80 sticky top-0 text-slate-400 border-b border-slate-800">
+                        <tr>
+                          <th className="py-2.5 px-4 font-semibold">Test Suite</th>
+                          <th className="py-2.5 px-4 font-semibold">Test Case</th>
+                          <th className="py-2.5 px-4 font-semibold text-center">Status</th>
+                          <th className="py-2.5 px-4 font-semibold text-right">Duration (ms)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
+                        {testResult.tests
+                          .filter((t) => {
+                            if (testFilter === "PASSED" && t.status !== "PASSED") return false;
+                            if (testFilter === "FAILED" && t.status !== "FAILED") return false;
+                            if (testSearch.trim() !== "") {
+                              const s = testSearch.toLowerCase();
+                              return (
+                                t.suite.toLowerCase().includes(s) ||
+                                t.name.toLowerCase().includes(s)
+                              );
+                            }
+                            return true;
+                          })
+                          .map((t, idx) => (
+                            <tr key={idx} className="hover:bg-slate-800/40 transition">
+                              <td className="py-2 px-4 text-blue-400 font-medium">{t.suite}</td>
+                              <td className="py-2 px-4 text-slate-200">
+                                <div>{t.name}</div>
+                                {t.failure_message && (
+                                  <div className="mt-1 text-red-400 bg-red-950/40 p-2 rounded border border-red-900/60 whitespace-pre-wrap font-sans text-[10px]">
+                                    {t.failure_message}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="py-2 px-4 text-center">
+                                <span
+                                  className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
+                                    t.status === "PASSED"
+                                      ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
+                                      : "bg-red-950 text-red-400 border border-red-800"
+                                  }`}
+                                >
+                                  {t.status}
+                                </span>
+                              </td>
+                              <td className="py-2 px-4 text-right text-slate-400">
+                                {t.duration_ms > 0 ? t.duration_ms.toFixed(2) : "<0.1"}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Console Output Terminal */}
+              <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+                <div className="p-3.5 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Terminal className="w-4 h-4 text-slate-400" />
+                    <span className="text-xs font-semibold text-slate-200">
+                      Execution Console Output (stdout/stderr)
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={handleCopyConsole}
+                      className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-1 rounded transition flex items-center space-x-1"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>{copiedLog ? "Copied!" : "Copy Output"}</span>
+                    </button>
+                    <button
+                      onClick={() => setTestOutputExpanded(!testOutputExpanded)}
+                      className="text-xs text-slate-400 hover:text-white px-2 py-1"
+                    >
+                      {testOutputExpanded ? "Collapse" : "Expand"}
+                    </button>
+                  </div>
+                </div>
+
+                {testOutputExpanded && (
+                  <div className="p-4 bg-black/95 max-h-80 overflow-y-auto font-mono text-[11px] text-slate-300 leading-relaxed whitespace-pre-wrap select-text">
+                    {testResult?.console_output || (
+                      <span className="text-slate-600">
+                        No console output recorded yet. Click "Run Test Suite" to execute GoogleTest and CTest.
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 7: DOCUMENTATION & REPORT */}
           {/* ========================================================================= */}
           {activeTab === "docs" && (
             <div className="space-y-6 max-w-4xl text-xs text-slate-300 leading-relaxed">

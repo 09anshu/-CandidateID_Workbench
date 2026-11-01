@@ -71,3 +71,4 @@ std::string export_thermal_csv(const ThermalResult& result, const ThermalParams&
 std::string export_convergence_csv(const ConvergenceStudyResult& study);
 
 } // namespace workbench
+

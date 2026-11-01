@@ -164,6 +164,9 @@
 ## Task G: Quality, Documentation & Submission
 
 - [x] Complete `README.md` with prerequisites, one-click steps, architecture, formats, build/test steps, and limitations
+- [x] Project demonstration video (3–5 min) recorded and linked in `README.md`
+- [x] GoogleTest & CTest automated test suite (`tests/gtest_suite.cpp`, 28 test cases, 100% pass rate)
+- [x] Automated Testing & Validation dashboard in Next.js UI with live test runner and report exporter
 - [x] Technical report (`docs/technical_report.md`, ≤ 6 pages)
 - [x] AI usage log (`docs/ai_usage_log.md`) with models, representative prompts, edits, validation, and challenge tests
 - [x] Candidate ownership statement (`docs/ownership_statement.md`)

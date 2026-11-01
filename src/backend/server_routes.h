@@ -9,3 +9,4 @@ namespace workbench {
 void register_all_routes(HttpServer& server, DeviceManager& dev_mgr);
 
 } // namespace workbench
+

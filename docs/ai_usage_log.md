@@ -41,6 +41,19 @@ All AI interactions were conducted under strict engineering oversight. Every mat
   - *Identified Flaw*: Sequential updates violate standard gradient descent (and the specific prompt instruction). Updating $w$ sequentially alters subsequent gradients.
   - *Correction Applied*: Enforced simultaneous gradient descent update using gradients computed strictly from the **original** initial parameters $\theta_0 = (w_0, b_0, v_0, c_0)$. Verified using central finite differences with $\varepsilon = 10^{-6}$, achieving error $< 10^{-7}$.
 
+### Interaction 4: GoogleTest & CTest Automated Testing Suite Integration
+- **Prompt Summary**: "Implement an automated testing module using GoogleTest and CTest with backend execution endpoint and frontend dashboard."
+- **Model Output**: Created `tests/gtest_suite.cpp`, CMake GoogleTest integration, backend test runner with atomic concurrency lock, and Next.js testing dashboard with live metrics and console terminal.
+- **Critical Assessment & Resolution**:
+  - *Identified Flaw*: Dynamically linked MSYS2 GoogleTest DLLs (`libgtest.dll`, `libgtest_main.dll`) were initially missing when running `workbench_gtests.exe` outside MSYS2 environment.
+  - *Correction Applied*: Copied runtime DLLs to application root and build output folders, verified standalone zero-dependency execution, and registered CTest integration achieving 100% test pass rate (28/28 tests passed).
+
+### Interaction 5: Form Input Freeform Numeric Editing & Video Integration
+- **Prompt Summary**: "Fix numeric input freezing / stepper snapping in multicore benchmark and thermal views, add demonstration video to README, and prepare GitHub push."
+- **Model Output**: Refactored inputs to `type="text" inputMode="numeric"` with CSS spinner removal, updated `README.md` with official demonstration video link, and validated repository structure.
+- **Critical Assessment & Resolution**:
+  - Validated that unconstrained text inputs allow freeform backspacing, negative numbers, and arbitrary values while eliminating browser mouse-wheel scroll hijacking.
+
 ---
 
 ## 3. Deliberate Challenge Test & Outcome

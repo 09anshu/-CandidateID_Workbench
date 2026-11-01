@@ -79,3 +79,4 @@ PerformanceBenchmarkReport run_performance_benchmark(const BatchConfig& config, 
 std::string export_benchmark_csv(const PerformanceBenchmarkReport& report);
 
 } // namespace workbench
+

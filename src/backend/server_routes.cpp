@@ -1,5 +1,6 @@
 #include "server_routes.h"
 
+#include <fstream>
 #include <iomanip>
 #include <sstream>
 
@@ -9,6 +10,7 @@
 #include "../performance/parallel_solver.h"
 #include "../thermal/thermal_solver.h"
 #include "json_helper.h"
+#include "test_runner.h"
 
 namespace workbench {
 
@@ -513,6 +515,59 @@ void register_all_routes(HttpServer& server, DeviceManager& dev_mgr) {
         resp.custom_headers["Content-Disposition"] = "attachment; filename=\"backprop_training_history.csv\"";
         return resp;
     });
+
+    // -----------------------------------------------------------------------
+    // Automated Testing & Validation API (GoogleTest & CTest)
+    // -----------------------------------------------------------------------
+    auto handle_run_tests = [](const HttpRequest&) {
+        TestSuiteRunResult res = execute_test_suite();
+        if (!res.executed && !res.error.empty()) {
+            return HttpResponse::json(test_results_to_json(res), 409);
+        }
+        return HttpResponse::json(test_results_to_json(res), 200);
+    };
+
+    server.post("/api/tests/run", handle_run_tests);
+    server.post("/api/v1/tests/run", handle_run_tests);
+
+    auto handle_latest_tests = [](const HttpRequest&) {
+        TestSuiteRunResult res = load_latest_test_results();
+        return HttpResponse::json(test_results_to_json(res), 200);
+    };
+
+    server.get("/api/tests/latest", handle_latest_tests);
+    server.get("/api/v1/tests/latest", handle_latest_tests);
+
+    auto handle_export_xml = [](const HttpRequest&) {
+        std::string xml_path = "results/test_report.xml";
+        std::ifstream f(xml_path);
+        if (!f.is_open()) {
+            return HttpResponse::json("{\"error\":\"JUnit XML report not found. Please run tests first.\"}", 404);
+        }
+        std::string content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+        HttpResponse resp = HttpResponse::text(content, 200, "application/xml");
+        resp.custom_headers["Content-Disposition"] = "attachment; filename=\"test_report.xml\"";
+        return resp;
+    };
+
+    server.get("/api/tests/export/xml", handle_export_xml);
+    server.get("/api/v1/tests/export/xml", handle_export_xml);
+
+    auto handle_export_log = [](const HttpRequest&) {
+        std::string log_path = "results/test_execution.log";
+        std::ifstream f(log_path);
+        if (!f.is_open()) {
+            return HttpResponse::json("{\"error\":\"Execution log not found. Please run tests first.\"}", 404);
+        }
+        std::string content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+        HttpResponse resp = HttpResponse::text(content, 200, "text/plain");
+        resp.custom_headers["Content-Disposition"] = "attachment; filename=\"test_execution.log\"";
+        return resp;
+    };
+
+    server.get("/api/tests/export/log", handle_export_log);
+    server.get("/api/v1/tests/export/log", handle_export_log);
 }
 
 } // namespace workbench
+

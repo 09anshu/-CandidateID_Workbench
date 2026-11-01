@@ -73,9 +73,12 @@ print("\n2. Assembling strict submission manifest...")
 add_file("Launch.exe")
 add_file("workbench_backend.exe")
 add_file("workbench_tests.exe")
+add_file("workbench_gtests.exe")
 add_file("libgcc_s_seh-1.dll")
 add_file("libstdc++-6.dll")
 add_file("libwinpthread-1.dll")
+add_file("libgtest.dll")
+add_file("libgtest_main.dll")
 add_file("CMakeLists.txt")
 add_file("README.md")
 add_file(".vscode/launch.json")
@@ -106,6 +109,7 @@ add_file("version_control/commit_log.txt")
 
 # Tests
 add_file("tests/test_main.cpp")
+add_file("tests/gtest_suite.cpp")
 
 # Source Code
 add_dir("src/core", exclude_exts={".md"})
@@ -191,3 +195,4 @@ shutil.rmtree(clean_audit_dir)
 print("\n=================================================================")
 print("FINAL AUDIT RESULT: 100% PASSED — ARCHIVE READY FOR SUBMISSION!")
 print("=================================================================")
+
