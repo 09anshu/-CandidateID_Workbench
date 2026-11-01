@@ -16,12 +16,14 @@ All heavy computational workloads are executed in a native **C++17 engine** and 
 
 ---
 
-## 2. Project Demonstration Video
+## 2. Project Links and Demonstration
 
-**Duration**: 3–5 minutes  
-The demonstration video showcases the Unified Engineering Workbench, its core engineering modules, application workflow, and testing functionality.
+### GitHub Repository
+The complete source code, project architecture, AI configuration files, development history and implementation are available in the GitHub repository.  
+[View Unified Engineering Workbench on GitHub](https://github.com/09anshu/-CandidateID_Workbench.git)
 
-Watch the Project Demonstration:  
+### Project Demonstration Video
+The 3–5 minute demonstration video showcases the Unified Engineering Workbench, its core engineering modules, application workflow and automated testing functionality.  
 [Watch the Unified Engineering Workbench Demonstration](https://drive.google.com/file/d/1f1F-yDP18DRBDsUgpSBFXNpr4b2FMVaO/view?usp=sharing)
 
 > **Note**: The video is hosted on Google Drive with viewer access enabled for anyone with the link.
