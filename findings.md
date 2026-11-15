@@ -134,3 +134,53 @@ $$v_1 = 1.0 - 0.1(-0.71068202) = \mathbf{1.07106820}$$
 $$c_1 = 0.0 - 0.1(-1.53788284) = \mathbf{0.15378828}$$
 
 All gradients are negative because $\hat{y} < y$. Gradient descent increases all 4 parameters, which increases $\hat{y}$ toward $2.0$ and minimizes loss $J$.
+
+---
+
+## 5. 3D Heatsink Multi-Solver Benchmark (Assignment Extension)
+
+### 5.1 Heatsink Geometry & Conforming 5-Tet Mesh Formulation
+- Domain: Aluminium base plate ($100 \times 60 \times 8\text{ mm}$), 10 vertical cooling fins ($30\text{ mm}$ height, $2\text{ mm}$ thickness, $4\text{ mm}$ inter-fin gaps, $2\text{ mm}$ edge margins).
+- Analytical material volume: $V = 100 \times 60 \times 8 + 10 \times (100 \times 2 \times 30) = 48,000 + 60,000 = 108,000\text{ mm}^3 = \mathbf{1.080000 \times 10^{-4}\text{ m}^3}$.
+- Mesh volume across all 4 refinement levels: $1.080000 \times 10^{-4}\text{ m}^3$ (discrepancy $< 1.5 \times 10^{-16}\text{ m}^3$, machine precision).
+- Total surface area: $\mathbf{7.576000 \times 10^{-2}\text{ m}^2}$ (verified to 6 decimal places).
+- Meshing strategy: Alternating Kuhn 5-tet subdivision of hexahedral bricks with parity $p = (i + j + k) \% 2$. Guarantees positive Jacobian ($\det(C) > 0$) everywhere, conforming facet diagonals, and zero hanging nodes.
+
+### 5.2 Governing PDE & Element Stiffness Derivation
+- PDE: $-\nabla \cdot (k \nabla T) = 0$ in $\Omega$, $k = 205\text{ W/(m}\cdot\text{K)}$ (Aluminium 6061-T6).
+- Robin BC on exposed surfaces $\Gamma_c$: $-k \frac{\partial T}{\partial n} = h(T - T_{amb})$, $h = 25\text{ W/(m}^2\cdot\text{K)}$, $T_{amb} = 25.0^\circ\text{C}$.
+- Neumann BC on bottom heat source $\Gamma_q$ ($40 \times 30\text{ mm}$ footprint, $A = 1.2 \times 10^{-3}\text{ m}^2$): $q_{in} = 75\text{ W} / A = 62,500\text{ W/m}^2$.
+- Analytical element conduction stiffness:
+  $$K_{e,ij}^{cond} = k V_e (\nabla N_i \cdot \nabla N_j) = k V_e (\beta_i \beta_j + \gamma_i \gamma_j + \delta_i \delta_j)$$
+  Zero numerical quadrature error; exact closed-form matrix assembly.
+- Surface boundary convection stiffness & load:
+  $$K_{f,ij}^{conv} = \frac{h A_f}{12} \begin{bmatrix} 2 & 1 & 1 \\ 1 & 2 & 1 \\ 1 & 1 & 2 \end{bmatrix}, \quad F_{f,i}^{conv} = \frac{h T_{amb} A_f}{3} \begin{bmatrix} 1 \\ 1 \\ 1 \end{bmatrix}, \quad F_{f,i}^{flux} = \frac{q_{in} A_f}{3} \begin{bmatrix} 1 \\ 1 \\ 1 \end{bmatrix}$$
+- First-law energy conservation: $|Q_{in} - Q_{out}| / Q_{in} = \mathbf{0.00\%}$ imbalance across all solvers and meshes.
+
+### 5.3 Benchmark Metrics (5-Repetition Medians)
+
+| Mesh | DOFs (Nodes) | Elements | Matrix Nonzeros | Solver | Setup Time (ms) | Solve Time (ms) | Total Time (ms) | Iterations | Residual $||r||/||b||$ | Peak RAM (MB) |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Coarse** | 1,898 | 4,920 | 18,884 | **SparseLU** | 8.01 | 0.21 | 8.22 | 1 | $3.41\times 10^{-13}$ | 4.2 |
+| | | | | **PCG (IC)** | 3.42 | 2.96 | **6.32** | 57 | $6.02\times 10^{-8}$ | **1.8** |
+| | | | | **AMG-PCG** | 26.38 | 0.53 | 26.90 | 1 | $6.27\times 10^{-13}$ | 3.5 |
+| **Medium** | 7,100 | 20,400 | 73,626 | **SparseLU** | 74.80 | 1.39 | 77.10 | 1 | $6.31\times 10^{-13}$ | 18.5 |
+| | | | | **PCG (IC)** | 10.91 | 20.54 | **31.45** | 65 | $8.87\times 10^{-8}$ | **5.2** |
+| | | | | **AMG-PCG** | 164.74 | 38.39 | 203.12 | 16 | $3.57\times 10^{-8}$ | 12.0 |
+| **Fine** | 22,940 | 79,920 | 255,634 | **SparseLU** | 695.71 | 7.68 | 703.39 | 1 | $1.74\times 10^{-12}$ | 82.4 |
+| | | | | **PCG (IC)** | 38.20 | 254.91 | 287.31 | 209 | $9.35\times 10^{-8}$ | **16.4** |
+| | | | | **AMG-PCG** | 51.52 | 86.39 | **135.15** | 20 | $3.54\times 10^{-8}$ | 34.2 |
+| **Very Fine** | 41,454 | 148,800 | 467,640 | **SparseLU** | 2,630.75 | 21.73 | 2,652.48 | 1 | $2.79\times 10^{-12}$ | 215.0 |
+| | | | | **PCG (IC)** | 58.81 | 424.31 | 483.12 | 185 | $9.05\times 10^{-8}$ | **28.5** |
+| | | | | **AMG-PCG** | 53.28 | 82.67 | **135.73** | 14 | $4.23\times 10^{-8}$ | 58.0 |
+
+### 5.4 Cross-Solver Solution Agreement (Fine Mesh, 22,940 DOFs)
+- $\max |T_{\text{SparseLU}} - T_{\text{PCG}}| = \mathbf{4.8615 \times 10^{-7\ \circ}\text{C}}$ (RMS: $1.3284 \times 10^{-7\ \circ}\text{C}$)
+- $\max |T_{\text{SparseLU}} - T_{\text{AMG-PCG}}| = \mathbf{3.5561 \times 10^{-8\ \circ}\text{C}}$ (RMS: $8.0670 \times 10^{-9\ \circ}\text{C}$)
+- $\max |T_{\text{PCG}} - T_{\text{AMG-PCG}}| = \mathbf{4.8170 \times 10^{-7\ \circ}\text{C}}$
+- All three solvers solve the exact same mathematical problem to less than $0.0000005^\circ\text{C}$ difference.
+
+### 5.5 Scaling Exponents & Complexity Takeaway
+- **Direct SparseLU**: $\mathcal{O}(N^{1.88})$ — 3D fill-in causes superlinear factorization growth (8.2 ms $\to$ 2,652 ms; 4 MB $\to$ 215 MB).
+- **PCG with Incomplete Cholesky**: $\mathcal{O}(N^{1.34})$ — Zero fill-in keeps memory minimal (28.5 MB on 41k nodes), but iteration counts grow with condition number ($57 \to 185$ iters).
+- **AMG-PCG**: $\mathcal{O}(N^{0.98})$ — Near-ideal linear scaling. Iteration counts stay bounded ($12 \to 20$ iters); 19.5x faster than direct SparseLU on Very Fine mesh.

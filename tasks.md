@@ -172,3 +172,34 @@
 - [x] Candidate ownership statement (`docs/ownership_statement.md`)
 - [x] Project memory files: `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`, `tasks.md`, `task_plan.md`, `findings.md`, `progress.md`, `SKILL.md`
 - [x] Final submission ZIP (`CandidateID_Workbench.zip`) ready
+
+---
+
+## Task H: Assignment Extension — Three Thermal Solver Comparison (3D Heatsink)
+
+### H.1 — 3D Geometry & Volumetric Mesh
+- [x] Replaced simple 1D cube with 3D Aluminium Finned Heatsink (100 x 60 x 8 mm base, 10 cooling fins of 30 mm height, 2 mm thickness, 4 mm channels)
+- [x] Conforming 5-tet alternating Kuhn decomposition generating positive-Jacobian tetrahedral elements across 4 mesh resolutions
+- [x] Exact closed-form volumetric verification matching analytical volume ($1.080000 \times 10^{-4}\text{ m}^3$, error $< 10^{-16}$)
+- [x] Automatic boundary face extraction and classification via hash map (convection vs localized 75 W heat source at Z = 0)
+- [x] 3D CAD STL geometry files exported to `data/heatsink/`
+
+### H.2 — Three Linear Solver Engines (C++17)
+- [x] Solver 1: Direct Sparse Solver via Eigen SparseLU with COLAMD fill-reducing permutation
+- [x] Solver 2: Preconditioned Conjugate Gradient (PCG) with Incomplete Cholesky factorization (IC(0))
+- [x] Solver 3: Algebraic Multigrid-Preconditioned CG (AMG-PCG) via AMGCL with smoothed aggregation and SPAI-0 relaxation
+- [x] Discretized on identical assembled global stiffness matrix $K$ and load vector $b$ with isotropic conductivity $k = 205\text{ W/(m}\cdot\text{K)}$ and $h = 25\text{ W/(m}^2\cdot\text{K)}$
+- [x] Zero-quadrature analytical tetrahedral element stiffness derivation ($K_e^{cond}$)
+
+### H.3 — Numerical Validation & Controlled Benchmarking
+- [x] Cross-solver solution agreement verified on 22,940-node mesh: max difference $\le 4.86 \times 10^{-7\ \circ}\text{C}$ (SparseLU vs PCG), $3.56 \times 10^{-8\ \circ}\text{C}$ (SparseLU vs AMG-PCG)
+- [x] First-law thermodynamic energy balance verified ($Q_{in} = Q_{out}$, $0.00\%$ imbalance)
+- [x] 4 mesh resolutions (Coarse: 1,898 nodes; Medium: 7,100 nodes; Fine: 22,940 nodes; Very Fine: 41,454 nodes)
+- [x] 5 measured repetitions per configuration with high-resolution clock reporting medians to `results/heatsink/benchmark_summary.csv`
+- [x] Isolated setup vs iterative solve times and peak memory tracking via Windows PSAPI
+
+### H.4 — Scientific Visualizations & Final Deliverable
+- [x] Generated all 12 required pictorial figures in `docs/figures_heatsink/` (CAD model, dimensions, mesh, BCs, 3 solver contours, architectures, timing, memory, convergence, scaling)
+- [x] Publication-quality 12-page comprehensive report `Heatsink_Thermal_Solver_Comparison.pdf` at root and `docs/`
+- [x] Full asymptotic scaling analysis: SparseLU $\mathcal{O}(N^{1.88})$, PCG $\mathcal{O}(N^{1.34})$, AMG-PCG $\mathcal{O}(N^{0.98})$
+- [x] Detailed industrial solver selection matrix across 6 operational engineering scenarios

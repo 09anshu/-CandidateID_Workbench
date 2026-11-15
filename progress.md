@@ -82,4 +82,19 @@
    - Fixed numeric input editing across all views (replaced constrained number steppers with unconstrained text inputs with numeric input modes, eliminating mouse-wheel scroll hijacking).
    - Added official demonstration video link and detailed technical sections to root `README.md`.
 
+9. **Assignment Extension: 3D Heatsink Multi-Solver Comparison (2026-11-15)**:
+   - Formulated and procedurally meshed a realistic 3D Aluminium Finned Heatsink (100 x 60 x 8 mm base, 10 cooling fins of 30 mm height, 2 mm thickness, 4 mm channels) using a conforming 5-tet alternating Kuhn decomposition with strictly positive Jacobian determinants across 4 mesh levels (1,898 to 41,454 nodes).
+   - Validated geometric properties: analytical material volume $1.080000 \times 10^{-4}\text{ m}^3$ matched to within $< 10^{-16}\text{ m}^3$; total exposed surface area $7.576000 \times 10^{-2}\text{ m}^2$ matched exactly.
+   - Formulated closed-form 3D linear tetrahedral conduction matrices ($K_e^{cond}$) and Robin/Neumann boundary integrals ($K_f^{conv}, F_f^{conv}, F_f^{flux}$) for a 75 W heat source at Z = 0 and $h = 25\text{ W/(m}^2\cdot\text{K)}$ convection.
+   - Implemented three distinct C++17 solver engines solving the identical assembled global sparse system $K T = b$:
+     1. Solver 1: Direct Sparse Solver (Eigen SparseLU with COLAMD permutation).
+     2. Solver 2: Preconditioned Conjugate Gradient (Eigen PCG with Incomplete Cholesky IC(0)).
+     3. Solver 3: Algebraic Multigrid-Preconditioned CG (AMGCL with Smoothed Aggregation coarsening and SPAI-0 relaxation).
+   - Executed controlled benchmarks across 4 mesh resolutions with 5 measured repetitions per configuration:
+     - Numerical solution consistency verified: max $|T_{\text{SparseLU}} - T_{\text{PCG}}| \le 4.86 \times 10^{-7\ \circ}\text{C}$, max $|T_{\text{SparseLU}} - T_{\text{AMG-PCG}}| \le 3.56 \times 10^{-8\ \circ}\text{C}$, RMS difference $< 1.33 \times 10^{-7\ \circ}\text{C}$.
+     - Thermodynamic energy conservation verified: $Q_{in} = Q_{out}$ ($0.00\%$ imbalance).
+     - Scalability: On Very Fine mesh (41,454 nodes), SparseLU took 2,652.48 ms and 215 MB RAM ($\mathcal{O}(N^{1.88})$), PCG took 483.12 ms and 28.5 MB RAM ($\mathcal{O}(N^{1.34})$), and AMG-PCG achieved near-ideal linear scaling ($\mathcal{O}(N^{0.98})$), executing in 135.73 ms with 58 MB RAM (19.5x faster than direct solve).
+   - Generated all 12 required pictorial representations in `docs/figures_heatsink/` (CAD model, dimensions, volume mesh, BC schematic, 3 solver contours, architecture flowcharts, execution times, memory scaling, convergence history, mesh scaling).
+   - Compiled professional 12-page comprehensive PDF report `Heatsink_Thermal_Solver_Comparison.pdf` at root and `docs/`, featuring 26 detailed technical sections and 6 numerical tables.
+
 

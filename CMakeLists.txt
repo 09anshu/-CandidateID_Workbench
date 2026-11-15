@@ -71,6 +71,20 @@ if(WIN32)
     target_link_libraries(workbench_gtests PRIVATE ws2_32)
 endif()
 
+# Heatsink Thermal Benchmark Sources
+set(HEATSINK_SOURCES
+    src/thermal/heatsink_mesh.cpp
+    src/thermal/heatsink_solver.cpp
+    src/backend/heatsink_main.cpp
+)
+
+add_executable(heatsink_benchmark ${HEATSINK_SOURCES})
+target_include_directories(heatsink_benchmark PRIVATE src src/backend/third_party)
+target_compile_definitions(heatsink_benchmark PRIVATE AMGCL_NO_BOOST)
+if(WIN32)
+    target_link_libraries(heatsink_benchmark PRIVATE ws2_32 psapi)
+endif()
+
 enable_testing()
 add_test(NAME ComprehensiveCustomTests COMMAND workbench_tests)
 gtest_discover_tests(workbench_gtests XML_OUTPUT_DIR "${CMAKE_BINARY_DIR}/results")
