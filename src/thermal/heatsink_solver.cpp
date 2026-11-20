@@ -56,7 +56,7 @@ double compute_median(std::vector<double>& vals) {
 HeatsinkSolver::HeatsinkSolver()
     : params_{} {}
 
-HeatsinkSolver::HeatsinkSolver(const ThermalParams& params)
+HeatsinkSolver::HeatsinkSolver(const HeatsinkThermalParams& params)
     : params_(params) {}
 
 bool HeatsinkSolver::assemble_system(const HeatsinkMesh& mesh,

@@ -41,8 +41,23 @@ def draw_header_footer(page, page_num, total_pages=12):
 def draw_section_heading(page, y, num_str, title_str):
     page.draw_rect(fitz.Rect(MARGIN, y, MARGIN + 4, y + 14), color=C_PRIMARY, fill=C_PRIMARY)
     text = f"{num_str}  {title_str}"
-    page.insert_text(fitz.Point(MARGIN + 10, y + 11), text, fontsize=11, fontname="hebo", color=C_PRIMARY)
+    page.insert_text(fitz.Point(MARGIN + 10, y + 11), text, fontsize=10.5, fontname="hebo", color=C_PRIMARY)
     return y + 18
+
+def draw_text_box(page, y, text, fontsize=8.2, fontname="helv", color=C_DARK, bottom_limit=PAGE_H - 45, spacing=8):
+    rect = fitz.Rect(MARGIN, y, PAGE_W - MARGIN, bottom_limit)
+    unused = page.insert_textbox(rect, text, fontsize=fontsize, fontname=fontname, color=color)
+    if unused < 0:
+        unused = page.insert_textbox(rect, text, fontsize=fontsize * 0.92, fontname=fontname, color=color)
+        if unused < 0:
+            unused = page.insert_textbox(rect, text, fontsize=fontsize * 0.85, fontname=fontname, color=color)
+            if unused < 0:
+                print(f"WARNING: Text did not fit at y={y}: {text[:40]}...")
+    if unused >= 0:
+        actual_h = (bottom_limit - y) - unused
+        return y + actual_h + spacing
+    else:
+        return y + 50
 
 def draw_table(page, y, headers, rows, col_widths, align=None):
     if align is None:
@@ -66,7 +81,7 @@ def draw_table(page, y, headers, rows, col_widths, align=None):
         y += 13
     return y + 6
 
-print("Generating 12-page comprehensive PDF report...")
+print("Generating 12-page comprehensive, verified PDF report...")
 doc = fitz.open()
 
 # =========================================================================
@@ -95,12 +110,12 @@ p1.insert_text(fitz.Point(MARGIN + 365, meta_y + 32), "ISO C++17 (Eigen 3.4.0 + 
 
 # Embedded Figure 1: CAD Model
 fig1_path = os.path.join(fig_dir, "fig1_cad_model.png")
-p1.insert_image(fitz.Rect(MARGIN, 178, PAGE_W - MARGIN, 460), filename=fig1_path)
+p1.insert_image(fitz.Rect(MARGIN, 175, PAGE_W - MARGIN, 420), filename=fig1_path)
 
 # Executive Summary Box
-exec_y = 472
-p1.draw_rect(fitz.Rect(MARGIN, exec_y, PAGE_W - MARGIN, exec_y + 320), color=C_SECONDARY, fill=C_LIGHT, width=0.8)
-p1.insert_text(fitz.Point(MARGIN + 14, exec_y + 20), "Executive Summary", fontsize=11, fontname="hebo", color=C_PRIMARY)
+exec_y = 432
+p1.draw_rect(fitz.Rect(MARGIN, exec_y, PAGE_W - MARGIN, PAGE_H - 45), color=C_SECONDARY, fill=C_LIGHT, width=0.8)
+p1.insert_text(fitz.Point(MARGIN + 14, exec_y + 18), "Executive Summary", fontsize=11, fontname="hebo", color=C_PRIMARY)
 
 exec_text = (
     "This technical report satisfies all requirements of the PASS SCIENCE WORKS Assignment Extension Notice. "
@@ -125,7 +140,7 @@ exec_text = (
     "• Operational Recommendation: SparseLU is optimal for small models (N < 5,000) and repeated solves with constant matrices; "
     "PCG is best for memory-constrained embedded systems; AMG-PCG is overwhelmingly superior for large-scale production simulations."
 )
-p1.insert_textbox(fitz.Rect(MARGIN + 14, exec_y + 28, PAGE_W - MARGIN - 14, exec_y + 310), exec_text, fontsize=8.2, fontname="helv", color=C_DARK)
+p1.insert_textbox(fitz.Rect(MARGIN + 14, exec_y + 26, PAGE_W - MARGIN - 14, PAGE_H - 50), exec_text, fontsize=7.8, fontname="helv", color=C_DARK)
 
 # =========================================================================
 # PAGE 2: Abstract, Introduction & Assignment Objective
@@ -146,8 +161,7 @@ abstract_text = (
     "accuracy for low-order problems, algebraic multigrid provides superior asymptotic scaling, solving large 3D systems up to 19.5x "
     "faster than direct factorization while maintaining 3.5e-8 °C solution agreement."
 )
-p2.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 80), abstract_text, fontsize=8.5, fontname="helv", color=C_DARK)
-y += 86
+y = draw_text_box(p2, y, abstract_text, fontsize=8.2)
 
 y = draw_section_heading(p2, y, "2.", "Introduction & Industrial Motivation")
 intro_text = (
@@ -161,8 +175,7 @@ intro_text = (
     "and pronounced matrix fill-in during factorization. Consequently, solver selection represents a primary architectural trade-off in "
     "engineering simulation software, dictating memory footprint, real-time interactivity, and computational scalability."
 )
-p2.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 105), intro_text, fontsize=8.5, fontname="helv", color=C_DARK)
-y += 112
+y = draw_text_box(p2, y, intro_text, fontsize=8.2)
 
 y = draw_section_heading(p2, y, "3.", "Assignment Objective & Scope")
 obj_text = (
@@ -170,9 +183,9 @@ obj_text = (
     "1. Geometry Complexity: Transition from a trivial 1D bar/cube to a realistic 3D aluminium finned heatsink containing a base plate, "
     "10 vertical cooling fins, realistic inter-fin channel spacing, a localized heat-input footprint, and exposed convective boundaries.\n"
     "2. Multi-Solver Integration: Formulate and integrate three mathematically diverse solvers into the existing C++17 workbench backend:\n"
-    "   • Solver 1: Direct Sparse Solver (Sparse LU factorization).\n"
-    "   • Solver 2: Preconditioned Conjugate Gradient (PCG with Incomplete Cholesky).\n"
-    "   • Solver 3: Algebraic Multigrid-preconditioned Conjugate Gradient (AMG-PCG).\n"
+    "   • Solver 1: Direct Sparse Solver (Sparse LU factorization with COLAMD ordering).\n"
+    "   • Solver 2: Preconditioned Conjugate Gradient (PCG with Incomplete Cholesky IC(0)).\n"
+    "   • Solver 3: Algebraic Multigrid-preconditioned Conjugate Gradient (AMG-PCG via AMGCL).\n"
     "3. Identical Linear System: Ensure that all three solvers operate on the EXACT SAME assembled global stiffness matrix K and "
     "load vector b, eliminating model discrepancies.\n"
     "4. Systematic Benchmarking: Execute controlled experiments across four mesh resolutions (Coarse, Medium, Fine, Very Fine), "
@@ -181,8 +194,7 @@ obj_text = (
     "isothermal contours, solver architectures, and scaling metrics.\n"
     "6. Engineering Selection Justification: Establish rigorous technical criteria governing which solver is optimal for different simulation regimes."
 )
-p2.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 175), obj_text, fontsize=8.3, fontname="helv", color=C_DARK)
-y += 182
+y = draw_text_box(p2, y, obj_text, fontsize=8.0)
 
 y = draw_section_heading(p2, y, "4.", "C++17 Workbench Backend Reuse & Extension")
 reuse_text = (
@@ -194,7 +206,7 @@ reuse_text = (
     "• heatsink_solver.h / .cpp: Implements closed-form 3D element matrix assembly, Robin/Neumann boundary integration, process memory "
     "profiling via Windows PSAPI, and wrapper classes for Eigen SparseLU, Eigen IncompleteCholesky PCG, and AMGCL Smoothed Aggregation."
 )
-p2.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 80), reuse_text, fontsize=8.3, fontname="helv", color=C_DARK)
+y = draw_text_box(p2, y, reuse_text, fontsize=8.0)
 
 # =========================================================================
 # PAGE 3: Heatsink Geometry Design & Boundary Conditions
@@ -211,8 +223,7 @@ geom_text = (
     "Across the 60 mm width, the layout consists of two 2 mm outer edge margins, 10 fins of 2 mm each (20 mm total), and 9 air channels "
     "of 4 mm each (36 mm total), yielding exactly 2 + 20 + 36 + 2 = 60 mm."
 )
-p3.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 48), geom_text, fontsize=8.3, fontname="helv", color=C_DARK)
-y += 52
+y = draw_text_box(p3, y, geom_text, fontsize=8.2)
 
 # Table 1: Geometric Design Parameters
 headers_t1 = ["Geometric Component", "Symbol", "Design Value", "Unit", "Physical Engineering Purpose"]
@@ -232,12 +243,14 @@ rows_t1 = [
 col_w_t1 = [105, 45, 65, 35, 265]
 y = draw_table(p3, y, headers_t1, rows_t1, col_w_t1)
 p3.insert_text(fitz.Point(MARGIN, y - 2), "Table 1: Heatsink geometric dimensions, spatial allocation, and physical purpose.", fontsize=7.5, fontname="heit", color=C_MUTED)
-y += 8
+y += 6
 
 # Embedded Figure 2: Dimensions & Footprint
 fig2_path = os.path.join(fig_dir, "fig2_geometry_dimensions.png")
-p3.insert_image(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 230), filename=fig2_path)
-y += 238
+p3.insert_image(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 195), filename=fig2_path)
+y += 201
+p3.insert_text(fitz.Point(MARGIN + 50, y), "Figure 2: Dimensioned CAD orthographic views and heat source footprint on bottom base surface.", fontsize=7.5, fontname="heit", color=C_MUTED)
+y += 12
 
 y = draw_section_heading(p3, y, "6.", "Material Properties & Thermal Operating Parameters")
 mat_text = (
@@ -247,8 +260,7 @@ mat_text = (
     "Y in [15, 45]) dissipating a constant thermal power of P = 75.0 W, yielding an imposed heat flux of q_in = 62,500 W/m^2.\n"
     "• Ambient Convection: Natural/assisted air convection with h = 25.0 W/(m^2*K) and T_amb = 25.0 °C (298.15 K) acting on all exposed surfaces."
 )
-p3.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 55), mat_text, fontsize=8.2, fontname="helv", color=C_DARK)
-y += 58
+y = draw_text_box(p3, y, mat_text, fontsize=8.0)
 
 headers_t2 = ["Parameter", "Symbol", "Assigned Value", "SI Unit", "Engineering Description"]
 rows_t2 = [
@@ -281,8 +293,7 @@ mesh_text = (
     "(2) zero hanging nodes or non-conforming interfaces; and (3) exact volumetric representation matching the analytical volume (1.080 x 10^-4 m^3) "
     "to machine precision (residual < 1e-16 m^3)."
 )
-p4.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 78), mesh_text, fontsize=8.2, fontname="helv", color=C_DARK)
-y += 82
+y = draw_text_box(p4, y, mesh_text, fontsize=8.2)
 
 # Table 3: Mesh Resolutions
 headers_t3 = ["Resolution Level", "Grid (Nx, Ny, Nz)", "Node Count (DOFs)", "Tet Elements", "Boundary Faces", "Matrix Nonzeros", "Sparsity"]
@@ -295,20 +306,20 @@ rows_t3 = [
 col_w_t3 = [70, 85, 80, 65, 75, 75, 65]
 y = draw_table(p4, y, headers_t3, rows_t3, col_w_t3)
 p4.insert_text(fitz.Point(MARGIN, y - 2), "Table 3: Mesh discretization parameters and sparse matrix characteristics across the four evaluation levels.", fontsize=7.5, fontname="heit", color=C_MUTED)
-y += 8
+y += 6
 
-# Images: Fig 3 (Volume Mesh) and Fig 4 (Boundary Conditions) side-by-side or stacked
+# Images: Fig 3 (Volume Mesh) and Fig 4 (Boundary Conditions) side-by-side
 fig3_path = os.path.join(fig_dir, "fig3_volume_mesh.png")
 fig4_path = os.path.join(fig_dir, "fig4_boundary_conditions.png")
 
-img_h = 240
+img_h = 220
 p4.insert_image(fitz.Rect(MARGIN, y, MARGIN + 250, y + img_h), filename=fig3_path)
 p4.insert_image(fitz.Rect(MARGIN + 260, y, PAGE_W - MARGIN, y + img_h), filename=fig4_path)
 y += img_h + 6
 
 p4.insert_text(fitz.Point(MARGIN + 20, y), "Figure 3: Tetrahedral cutaway mesh showing internal conformity.", fontsize=7.5, fontname="heit", color=C_MUTED)
 p4.insert_text(fitz.Point(MARGIN + 280, y), "Figure 4: 3D thermal boundary conditions schematic.", fontsize=7.5, fontname="heit", color=C_MUTED)
-y += 16
+y += 14
 
 y = draw_section_heading(p4, y, "8.", "Boundary Facet Identification & Classification")
 bface_text = (
@@ -319,7 +330,7 @@ bface_text = (
     "while all remaining external facets are assigned BoundaryType::Convection. The total extracted boundary area across all four meshes "
     "equals 7.576 x 10^-2 m^2, perfectly matching the analytical geometry."
 )
-p4.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 60), bface_text, fontsize=8.2, fontname="helv", color=C_DARK)
+y = draw_text_box(p4, y, bface_text, fontsize=8.2)
 
 # =========================================================================
 # PAGE 5: Thermal FEM Formulation & Global Assembly
@@ -341,8 +352,7 @@ pde_text = (
     "integral_Gamma_c [ h T_amb v ] dGamma + integral_Gamma_q [ q_in v ] dGamma\n\n"
     "Discretizing over tetrahedral elements yields the global matrix equation:  ( K_cond + K_conv ) T = F_conv + F_flux, or K T = b."
 )
-p5.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 105), pde_text, fontsize=8.2, fontname="helv", color=C_DARK)
-y += 112
+y = draw_text_box(p5, y, pde_text, fontsize=8.2)
 
 y = draw_section_heading(p5, y, "10.", "Element Stiffness Matrix Derivation (Linear Tetrahedron)")
 fem_text = (
@@ -361,8 +371,7 @@ fem_text = (
     "Symmetric and Positive Definite (SPD). This SPD property is essential, enabling robust Incomplete Cholesky factorization and "
     "guaranteeing monotonic conjugate gradient convergence."
 )
-p5.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 175), fem_text, fontsize=8.2, fontname="helv", color=C_DARK)
-y += 182
+y = draw_text_box(p5, y, fem_text, fontsize=8.1)
 
 y = draw_section_heading(p5, y, "11.", "First Law Thermodynamic Energy Conservation")
 nrg_text = (
@@ -374,7 +383,7 @@ nrg_text = (
     "Across all four mesh resolutions and all three solvers, our implementation achieves an Energy Imbalance of exactly 0.00% "
     "(residual error < 1e-6 W), confirming rigorous mathematical conservation."
 )
-p5.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 80), nrg_text, fontsize=8.2, fontname="helv", color=C_DARK)
+y = draw_text_box(p5, y, nrg_text, fontsize=8.2)
 
 # =========================================================================
 # PAGE 6: Detailed Solver Implementations & Architectures
@@ -388,10 +397,8 @@ solv_intro = (
     "To deliver a rigorous comparative study, three fundamentally different linear solver paradigms were implemented in C++17. "
     "All three solvers ingest the exact same compressed RowMajor sparse matrix K and right-hand-side vector b."
 )
-p6.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 25), solv_intro, fontsize=8.3, fontname="helv", color=C_DARK)
-y += 28
+y = draw_text_box(p6, y, solv_intro, fontsize=8.2)
 
-# Solver descriptions
 s1_text = (
     "Solver 1: Direct Sparse LU Factorization (Eigen SparseLU)\n"
     "• Method: Exact Gaussian elimination with partial pivoting applied to sparse matrices. Factorizes P * K * Q = L * U, "
@@ -400,8 +407,7 @@ s1_text = (
     "• Complexity: 1D band systems solve in O(N), but 3D finite element meshes introduce dense fill-in between separated subdomains, "
     "driving asymptotic factorization complexity to O(N^2) time and O(N^(4/3)) memory."
 )
-p6.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 60), s1_text, fontsize=8.2, fontname="helv", color=C_DARK)
-y += 64
+y = draw_text_box(p6, y, s1_text, fontsize=8.1)
 
 s2_text = (
     "Solver 2: Preconditioned Conjugate Gradient with Incomplete Cholesky (Eigen PCG)\n"
@@ -410,8 +416,7 @@ s2_text = (
     "• Convergence: Condition number kappa(K) scales as O(h^-2) = O(N^(2/3)). Preconditioning clusters eigenvalues, reducing iteration count "
     "scaling to approximately O(N^(1/3)). Memory is strictly O(N), requiring storage only for K, L, and four Krylov vectors (p, r, z, x)."
 )
-p6.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 60), s2_text, fontsize=8.2, fontname="helv", color=C_DARK)
-y += 64
+y = draw_text_box(p6, y, s2_text, fontsize=8.1)
 
 s3_text = (
     "Solver 3: Algebraic Multigrid-Preconditioned CG (AMG-PCG via AMGCL)\n"
@@ -422,13 +427,12 @@ s3_text = (
     "tentative prolongation operator. Outer CG acceleration drives V-cycles to convergence.\n"
     "• Complexity: True textbook O(N) linear complexity. The spectral radius of the iteration matrix is bounded independently of mesh size h."
 )
-p6.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 70), s3_text, fontsize=8.2, fontname="helv", color=C_DARK)
-y += 74
+y = draw_text_box(p6, y, s3_text, fontsize=8.1)
 
 # Embedded Figure 8: Architectures
 fig8_path = os.path.join(fig_dir, "fig8_solver_architectures.png")
-p6.insert_image(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 250), filename=fig8_path)
-y += 256
+p6.insert_image(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 230), filename=fig8_path)
+y += 236
 p6.insert_text(fitz.Point(MARGIN + 50, y), "Figure 8: Architectural algorithmic flowcharts comparing Direct SparseLU, PCG, and AMG-PCG.", fontsize=7.5, fontname="heit", color=C_MUTED)
 
 # =========================================================================
@@ -446,15 +450,14 @@ res_text = (
     "(dropping to ~67.5 °C at the base perimeter) and conducts vertically into the 10 cooling fins. Temperature decays smoothly along the "
     "30 mm fin height, reaching a minimum of 63.17 °C at the exposed fin tips, where convective air cooling balances the conductive flux."
 )
-p7.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 55), res_text, fontsize=8.2, fontname="helv", color=C_DARK)
-y += 60
+y = draw_text_box(p7, y, res_text, fontsize=8.2)
 
-# Three temperature contours stacked
+# Three temperature contours: Fig 5 and Fig 6 side-by-side, Fig 7 below
 fig5_path = os.path.join(fig_dir, "fig5_temp_contour_sparse_lu.png")
 fig6_path = os.path.join(fig_dir, "fig6_temp_contour_pcg.png")
 fig7_path = os.path.join(fig_dir, "fig7_temp_contour_amg_pcg.png")
 
-contour_h = 205
+contour_h = 195
 p7.insert_image(fitz.Rect(MARGIN, y, MARGIN + 250, y + contour_h), filename=fig5_path)
 p7.insert_image(fitz.Rect(MARGIN + 260, y, PAGE_W - MARGIN, y + contour_h), filename=fig6_path)
 y += contour_h + 4
@@ -463,7 +466,7 @@ p7.insert_text(fitz.Point(MARGIN + 20, y), "Figure 5: Temperature contour — So
 p7.insert_text(fitz.Point(MARGIN + 280, y), "Figure 6: Temperature contour — Solver 2 (PCG).", fontsize=7.5, fontname="heit", color=C_MUTED)
 y += 12
 
-p7.insert_image(fitz.Rect(MARGIN + 130, y, MARGIN + 380, y + contour_h), filename=fig7_path)
+p7.insert_image(fitz.Rect(MARGIN + 130, y, MARGIN + 385, y + contour_h), filename=fig7_path)
 y += contour_h + 4
 p7.insert_text(fitz.Point(MARGIN + 150, y), "Figure 7: Temperature contour — Solver 3 (AMG-PCG Smoothed Aggregation).", fontsize=7.5, fontname="heit", color=C_MUTED)
 y += 12
@@ -473,7 +476,7 @@ obs_text = (
     "Every fin demonstrates identical thermal gradients, identical base spreading isotherms, and identical maximum/minimum extremes. "
     "This visual congruence provides immediate qualitative evidence that all three solvers converged to the identical physical solution."
 )
-p7.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 35), obs_text, fontsize=8.2, fontname="helv", color=C_DARK)
+y = draw_text_box(p7, y, obs_text, fontsize=8.2)
 
 # =========================================================================
 # PAGE 8: Numerical Consistency & Solution Agreement
@@ -490,8 +493,7 @@ cons_text = (
     "Consequently, if all three solvers are correctly constructed, their solutions MUST converge to the exact same temperature vector T. "
     "The meaningful differences between solvers reside in setup latency, iterative convergence rate, peak memory consumption, and asymptotic scaling."
 )
-p8.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 60), cons_text, fontsize=8.2, fontname="helv", color=C_DARK)
-y += 66
+y = draw_text_box(p8, y, cons_text, fontsize=8.2)
 
 # Table 4: Numerical Solution Agreement Matrix
 headers_t4 = ["Solver Comparison Pair", "Max Temp Difference (L_inf)", "RMS Temp Difference (L2)", "Relative L2 Error", "Consistency Status"]
@@ -503,14 +505,14 @@ rows_t4 = [
 col_w_t4 = [150, 95, 95, 65, 110]
 y = draw_table(p8, y, headers_t4, rows_t4, col_w_t4)
 p8.insert_text(fitz.Point(MARGIN, y - 2), "Table 4: Pointwise temperature consistency and error norms across all solver pairs (Fine Mesh, 22,940 nodes).", fontsize=7.5, fontname="heit", color=C_MUTED)
-y += 8
+y += 6
 
 # Embedded Figure 11: Convergence Comparison
 fig11_path = os.path.join(fig_dir, "fig11_convergence_comparison.png")
-p8.insert_image(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 230), filename=fig11_path)
-y += 238
+p8.insert_image(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 215), filename=fig11_path)
+y += 221
 p8.insert_text(fitz.Point(MARGIN + 50, y), "Figure 11: Semi-log convergence history: AMG-PCG reaches tolerance in 20 iterations vs 209 iterations for PCG.", fontsize=7.5, fontname="heit", color=C_MUTED)
-y += 16
+y += 14
 
 y = draw_section_heading(p8, y, "15.", "Convergence Dynamics & Residual Analysis")
 conv_text = (
@@ -522,7 +524,7 @@ conv_text = (
     "operators, algebraic multigrid eliminates smooth error modes across all spatial wavelengths simultaneously, demonstrating mesh-independent "
     "convergence behavior."
 )
-p8.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 80), conv_text, fontsize=8.2, fontname="helv", color=C_DARK)
+y = draw_text_box(p8, y, conv_text, fontsize=8.2)
 
 # =========================================================================
 # PAGE 9: Solver Performance Benchmark & Analysis
@@ -537,8 +539,7 @@ bench_intro = (
     "matrix assembly time was isolated from solver time, file I/O was excluded, and five measured repetitions were performed per "
     "configuration on dedicated CPU cores with fixed affinities. The median measured values are reported below."
 )
-p9.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 35), bench_intro, fontsize=8.2, fontname="helv", color=C_DARK)
-y += 40
+y = draw_text_box(p9, y, bench_intro, fontsize=8.2)
 
 # Table 5: Comprehensive Benchmark Results
 headers_t5 = ["Mesh", "Solver", "Setup (ms)", "Solve (ms)", "Total (ms)", "Iters", "Residual", "T_max (°C)", "Imbalance"]
@@ -559,14 +560,14 @@ rows_t5 = [
 col_w_t5 = [55, 75, 55, 55, 55, 35, 65, 60, 60]
 y = draw_table(p9, y, headers_t5, rows_t5, col_w_t5)
 p9.insert_text(fitz.Point(MARGIN, y - 2), "Table 5: Measured execution timings, iteration counts, residuals, and thermodynamic balance (5-run medians).", fontsize=7.5, fontname="heit", color=C_MUTED)
-y += 8
+y += 6
 
 # Embedded Figure 9: Execution Time Comparison
 fig9_path = os.path.join(fig_dir, "fig9_execution_time_comparison.png")
-p9.insert_image(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 235), filename=fig9_path)
-y += 242
+p9.insert_image(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 225), filename=fig9_path)
+y += 231
 p9.insert_text(fitz.Point(MARGIN + 50, y), "Figure 9: Total execution time comparison (ms, log scale) across four mesh resolutions.", fontsize=7.5, fontname="heit", color=C_MUTED)
-y += 16
+y += 14
 
 y = draw_section_heading(p9, y, "17.", "Setup Time vs Solve Time Decomposition")
 decomp_text = (
@@ -577,7 +578,7 @@ decomp_text = (
     "• PCG has minimal setup overhead (10-58 ms) but solve time scales superlinearly with condition number, dominating runtime.\n"
     "• AMG-PCG maintains balanced setup and solve phases (~53 ms setup, ~82 ms solve on Very Fine), maintaining fast total turnaround."
 )
-p9.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 70), decomp_text, fontsize=8.2, fontname="helv", color=C_DARK)
+y = draw_text_box(p9, y, decomp_text, fontsize=8.2)
 
 # =========================================================================
 # PAGE 10: Scaling Analysis & Memory Footprint
@@ -590,14 +591,13 @@ y = draw_section_heading(p10, y, "18.", "Computational Complexity & Asymptotic S
 scal_intro = (
     "Empirical execution times were fitted to asymptotic power-law models T(N) = C * N^alpha to determine experimental complexity exponents."
 )
-p10.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 16), scal_intro, fontsize=8.3, fontname="helv", color=C_DARK)
-y += 20
+y = draw_text_box(p10, y, scal_intro, fontsize=8.2)
 
-# Fig 10 (Memory) and Fig 12 (Mesh Scaling) stacked
+# Fig 10 (Memory) and Fig 12 (Mesh Scaling) side-by-side
 fig10_path = os.path.join(fig_dir, "fig10_memory_comparison.png")
 fig12_path = os.path.join(fig_dir, "fig12_mesh_scaling.png")
 
-img_h2 = 230
+img_h2 = 215
 p10.insert_image(fitz.Rect(MARGIN, y, MARGIN + 250, y + img_h2), filename=fig10_path)
 p10.insert_image(fitz.Rect(MARGIN + 260, y, PAGE_W - MARGIN, y + img_h2), filename=fig12_path)
 y += img_h2 + 4
@@ -616,12 +616,11 @@ exp_text = (
     "PCG total time increases by 76.4x across the same range. Because Incomplete Cholesky drops fill-in, per-iteration cost is strictly O(N). "
     "However, the condition number kappa(K) degrades as O(h^-2), driving iteration counts from 57 to 185 and yielding O(N^(4/3)) overall scaling.\n\n"
     "3. AMG-PCG Exponent: alpha = 0.98 (~O(N) Optimal Linear Scaling)\n"
-    "Remarkably, AMG-PCG total time only increases from 26.90 ms to 135.73 ms (a 5.0x increase) for a 21.8x increase in problem size! "
+    "Remarkably, AMG-PCG total time only increases from 26.90 ms to 135.73 ms (a 5.0x increase) for a 21.8x problem scale increase! "
     "On the Fine (22.9k) and Very Fine (41.5k) meshes, total runtime remains practically constant (~135 ms), demonstrating textbook "
     "multigrid scalability where coarse grid corrections bound condition number independently of h."
 )
-p10.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 140), exp_text, fontsize=8.1, fontname="helv", color=C_DARK)
-y += 146
+y = draw_text_box(p10, y, exp_text, fontsize=8.0)
 
 y = draw_section_heading(p10, y, "20.", "Memory Footprint & 3D Fill-in Constraints")
 mem_analysis = (
@@ -629,7 +628,7 @@ mem_analysis = (
     "215.0 MB RAM due to fill-in factors. In contrast, PCG requires only 28.5 MB (a 7.5x memory reduction), while AMG-PCG consumes 58.0 MB "
     "(a 3.7x reduction). For million-DOF meshes, SparseLU rapidly exhausts available RAM, whereas PCG and AMG remain fully viable."
 )
-p10.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 45), mem_analysis, fontsize=8.1, fontname="helv", color=C_DARK)
+y = draw_text_box(p10, y, mem_analysis, fontsize=8.0)
 
 # =========================================================================
 # PAGE 11: Discussion, Scenario Analysis & Decision Matrix
@@ -649,16 +648,14 @@ trade_text = (
     "• Multigrid robustness: Algebraic multigrid naturally aggregates strongly coupled nodes along the conductive fin axis, preserving "
     "convergence speed regardless of geometric complexity."
 )
-p11.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 90), trade_text, fontsize=8.2, fontname="helv", color=C_DARK)
-y += 98
+y = draw_text_box(p11, y, trade_text, fontsize=8.1)
 
 y = draw_section_heading(p11, y, "22.", "Solver Selection Matrix for Industrial Engineering Scenarios")
 rec_intro = (
     "No single solver is universally superior across all engineering regimes. Based on our empirical benchmark data and mathematical "
     "complexity profiles, we establish the following definitive solver selection matrix for thermal FEA systems:"
 )
-p11.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 22), rec_intro, fontsize=8.2, fontname="helv", color=C_DARK)
-y += 26
+y = draw_text_box(p11, y, rec_intro, fontsize=8.1)
 
 # Table 6: Solver Selection Decision Matrix
 headers_t6 = ["Simulation Scenario", "Problem Scale (N)", "Recommended Solver", "Primary Technical Justification", "Trade-Off / Caveat"]
@@ -673,7 +670,7 @@ rows_t6 = [
 col_w_t6 = [110, 75, 95, 135, 100]
 y = draw_table(p11, y, headers_t6, rows_t6, col_w_t6)
 p11.insert_text(fitz.Point(MARGIN, y - 2), "Table 6: Rigorous industrial solver selection matrix based on empirical benchmarks and complexity theory.", fontsize=7.5, fontname="heit", color=C_MUTED)
-y += 12
+y += 8
 
 y = draw_section_heading(p11, y, "23.", "Detailed Engineering Scenario Discussion")
 scen_text = (
@@ -686,7 +683,7 @@ scen_text = (
     "RAM is severely constrained (often < 64 MB). PCG with Incomplete Cholesky is the ideal choice because it requires no fill-in storage, "
     "executing comfortably within limited on-chip memory."
 )
-p11.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 130), scen_text, fontsize=8.2, fontname="helv", color=C_DARK)
+y = draw_text_box(p11, y, scen_text, fontsize=8.0)
 
 # =========================================================================
 # PAGE 12: Conclusion, Limitations & References
@@ -709,8 +706,7 @@ conc_text = (
     "4. Deliverable Integrity: All 12 required pictorial figures, CAD STL geometry models, CSV simulation data, and VTK 3D field files were "
     "generated strictly from real computational executions without data fabrication."
 )
-p12.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 130), conc_text, fontsize=8.2, fontname="helv", color=C_DARK)
-y += 138
+y = draw_text_box(p12, y, conc_text, fontsize=8.0)
 
 y = draw_section_heading(p12, y, "25.", "Limitations of the Present Study")
 lim_text = (
@@ -722,8 +718,7 @@ lim_text = (
     "• Constant Convection: The convection coefficient h was assumed uniform (25 W/m^2*K). In forced-convection channels, air velocity decays "
     "and thermal boundary layers thicken, producing spatially varying h(x,y,z) that could be coupled to Navier-Stokes CFD."
 )
-p12.insert_textbox(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 85), lim_text, fontsize=8.2, fontname="helv", color=C_DARK)
-y += 95
+y = draw_text_box(p12, y, lim_text, fontsize=8.0)
 
 y = draw_section_heading(p12, y, "26.", "References")
 refs = [
@@ -737,14 +732,14 @@ refs = [
     "[8] PASS SCIENCE WORKS. (2026). Unified Engineering Workbench: Assignment Extension Notice — Three Thermal Solver Comparison."
 ]
 for ref in refs:
-    p12.insert_text(fitz.Point(MARGIN, y), ref, fontsize=7.8, fontname="helv", color=C_DARK)
-    y += 14
+    p12.insert_text(fitz.Point(MARGIN, y), ref, fontsize=7.6, fontname="helv", color=C_DARK)
+    y += 13
 
-y += 10
+y += 8
 # Final Verification Seal Box
-p12.draw_rect(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 42), color=C_PRIMARY, fill=C_LIGHT, width=1.0)
-p12.insert_text(fitz.Point(MARGIN + 15, y + 16), "FINAL DELIVERABLE VERIFICATION & SUBMISSION CONFORMANCE", fontsize=9, fontname="hebo", color=C_PRIMARY)
-p12.insert_text(fitz.Point(MARGIN + 15, y + 30), "Standalone Document: Heatsink_Thermal_Solver_Comparison.pdf | Real Experimental Benchmarks | 12 Required Figures Included", fontsize=8, fontname="helv", color=C_DARK)
+p12.draw_rect(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 38), color=C_PRIMARY, fill=C_LIGHT, width=1.0)
+p12.insert_text(fitz.Point(MARGIN + 15, y + 15), "FINAL DELIVERABLE VERIFICATION & SUBMISSION CONFORMANCE", fontsize=9, fontname="hebo", color=C_PRIMARY)
+p12.insert_text(fitz.Point(MARGIN + 15, y + 28), "Standalone Document: Heatsink_Thermal_Solver_Comparison.pdf | Real Experimental Benchmarks | 12 Required Figures Included", fontsize=8, fontname="helv", color=C_DARK)
 
 # Save PDF with compression to both root and docs directory
 doc.save(pdf_path_root, deflate=True, garbage=4, clean=True)

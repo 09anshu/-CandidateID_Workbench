@@ -29,6 +29,8 @@ set(CORE_SOURCES
 # Backend server sources
 set(BACKEND_SOURCES
     ${CORE_SOURCES}
+    src/thermal/heatsink_mesh.cpp
+    src/thermal/heatsink_solver.cpp
     src/backend/http_server.cpp
     src/backend/server_routes.cpp
     src/backend/test_runner.cpp
@@ -43,9 +45,10 @@ set(TEST_SOURCES
 
 # Backend Executable
 add_executable(workbench_backend ${BACKEND_SOURCES})
-target_include_directories(workbench_backend PRIVATE src)
+target_include_directories(workbench_backend PRIVATE src src/backend/third_party)
+target_compile_definitions(workbench_backend PRIVATE AMGCL_NO_BOOST)
 if(WIN32)
-    target_link_libraries(workbench_backend PRIVATE ws2_32)
+    target_link_libraries(workbench_backend PRIVATE ws2_32 psapi)
 endif()
 
 # Custom Lightweight Test Executable

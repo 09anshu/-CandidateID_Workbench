@@ -38,6 +38,7 @@ venv/
 Thumbs.db
 Desktop.ini
 .DS_Store
+pdf_pages_inspect/
 
 # Environment & Secrets
 .env

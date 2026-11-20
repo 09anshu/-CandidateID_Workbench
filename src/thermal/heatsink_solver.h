@@ -16,7 +16,7 @@ enum class SolverType {
     AMG_PreconditionedCG
 };
 
-struct ThermalParams {
+struct HeatsinkThermalParams {
     double thermal_conductivity = 205.0; // k = 205 W/(m*K) (Aluminium 6061)
     double convection_coeff = 25.0;      // h = 25 W/(m^2*K) (Air convection)
     double ambient_temperature = 25.0;   // T_amb = 25.0 °C
@@ -57,10 +57,10 @@ struct BenchmarkRun {
 class HeatsinkSolver {
 public:
     HeatsinkSolver();
-    explicit HeatsinkSolver(const ThermalParams& params);
+    explicit HeatsinkSolver(const HeatsinkThermalParams& params);
 
-    void set_params(const ThermalParams& p) { params_ = p; }
-    const ThermalParams& params() const { return params_; }
+    void set_params(const HeatsinkThermalParams& p) { params_ = p; }
+    const HeatsinkThermalParams& params() const { return params_; }
 
     // Assemble FEM global stiffness matrix and load vector
     bool assemble_system(const HeatsinkMesh& mesh,
@@ -98,7 +98,7 @@ public:
                                      const std::vector<BenchmarkRun>& runs);
 
 private:
-    ThermalParams params_;
+    HeatsinkThermalParams params_;
 };
 
 } // namespace workbench

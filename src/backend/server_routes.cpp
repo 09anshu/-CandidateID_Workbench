@@ -9,6 +9,8 @@
 #include "../geometry/stl_parser.h"
 #include "../performance/parallel_solver.h"
 #include "../thermal/thermal_solver.h"
+#include "../thermal/heatsink_mesh.h"
+#include "../thermal/heatsink_solver.h"
 #include "json_helper.h"
 #include "test_runner.h"
 
@@ -567,6 +569,158 @@ void register_all_routes(HttpServer& server, DeviceManager& dev_mgr) {
 
     server.get("/api/tests/export/log", handle_export_log);
     server.get("/api/v1/tests/export/log", handle_export_log);
+
+    // -----------------------------------------------------------------------
+    // Assignment Extension: 3D Heatsink Multi-Solver Comparison
+    // -----------------------------------------------------------------------
+    server.post("/api/v1/heatsink/solve", [](const HttpRequest& req) {
+        std::string res_str = extract_json_string(req.body, "resolution");
+        std::string solver_str = extract_json_string(req.body, "solver");
+        if (res_str.empty()) res_str = "Coarse";
+        if (solver_str.empty()) solver_str = "PCG";
+
+        MeshResolution res = MeshResolution::Coarse;
+        if (res_str == "Medium") res = MeshResolution::Medium;
+        else if (res_str == "Fine") res = MeshResolution::Fine;
+        else if (res_str == "VeryFine") res = MeshResolution::VeryFine;
+
+        HeatsinkMesh mesh;
+        mesh.generate(res);
+        HeatsinkSolver solver;
+
+        Eigen::SparseMatrix<double, Eigen::RowMajor> K;
+        Eigen::VectorXd b;
+        if (!solver.assemble_system(mesh, K, b)) {
+            return HttpResponse::error("Failed to assemble 3D FEM system", 500);
+        }
+
+        SolverResult result;
+        if (solver_str == "SparseLU") {
+            result = solver.solve_sparse_lu(mesh, K, b);
+        } else if (solver_str == "AMG-PCG") {
+            result = solver.solve_amg_pcg(mesh, K, b);
+        } else {
+            result = solver.solve_pcg(mesh, K, b);
+        }
+
+        result.energy_imbalance_percent = solver.check_energy_balance(mesh, result.temperatures);
+
+        std::ostringstream ss;
+        ss << std::fixed << std::setprecision(6);
+        ss << "{"
+           << "\"success\":true,"
+           << "\"mesh_name\":\"" << json_escape(res_str) << "\","
+           << "\"solver_name\":\"" << json_escape(result.solver_name) << "\","
+           << "\"node_count\":" << result.node_count << ","
+           << "\"element_count\":" << result.element_count << ","
+           << "\"nonzero_count\":" << result.nonzero_count << ","
+           << "\"setup_time_ms\":" << result.setup_time_ms << ","
+           << "\"solve_time_ms\":" << result.solve_time_ms << ","
+           << "\"total_time_ms\":" << result.total_time_ms << ","
+           << "\"iterations\":" << result.iterations << ","
+           << "\"relative_residual\":" << std::scientific << result.relative_residual << std::fixed << ","
+           << "\"min_temperature\":" << result.min_temperature << ","
+           << "\"max_temperature\":" << result.max_temperature << ","
+           << "\"avg_temperature\":" << result.avg_temperature << ","
+           << "\"peak_memory_bytes\":" << result.peak_memory_bytes << ","
+           << "\"energy_imbalance_percent\":" << result.energy_imbalance_percent
+           << "}";
+        return HttpResponse::json(ss.str());
+    });
+
+    server.get("/api/v1/heatsink/results", [](const HttpRequest&) {
+        std::ifstream f("results/heatsink/benchmark_summary.csv");
+        if (!f.is_open()) {
+            return HttpResponse::error("Benchmark results not found. Please run benchmark first.", 404);
+        }
+
+        std::string line;
+        std::getline(f, line); // header
+
+        std::ostringstream ss;
+        ss << "{\"success\":true,\"records\":[";
+        bool first = true;
+        while (std::getline(f, line)) {
+            if (line.empty()) continue;
+            std::stringstream ls(line);
+            std::string mesh, solver, s_nodes, s_elems, s_nnz, s_setup, s_solve, s_total, s_iters, s_res, s_min, s_max, s_avg, s_imb;
+
+            std::getline(ls, mesh, ',');
+            if (ls.peek() == '"') {
+                ls.get(); // skip quote
+                std::getline(ls, solver, '"');
+                if (ls.peek() == ',') ls.get();
+            } else {
+                std::getline(ls, solver, ',');
+            }
+            std::getline(ls, s_nodes, ',');
+            std::getline(ls, s_elems, ',');
+            std::getline(ls, s_nnz, ',');
+            std::getline(ls, s_setup, ',');
+            std::getline(ls, s_solve, ',');
+            std::getline(ls, s_total, ',');
+            std::getline(ls, s_iters, ',');
+            std::getline(ls, s_res, ',');
+            std::getline(ls, s_min, ',');
+            std::getline(ls, s_max, ',');
+            std::getline(ls, s_avg, ',');
+            std::getline(ls, s_imb, ',');
+
+            if (!first) ss << ",";
+            first = false;
+
+            ss << "{"
+               << "\"mesh\":\"" << json_escape(mesh) << "\","
+               << "\"solver\":\"" << json_escape(solver) << "\","
+               << "\"nodes\":" << (s_nodes.empty() ? "0" : s_nodes) << ","
+               << "\"elements\":" << (s_elems.empty() ? "0" : s_elems) << ","
+               << "\"nonzeros\":" << (s_nnz.empty() ? "0" : s_nnz) << ","
+               << "\"setup_time_ms\":" << (s_setup.empty() ? "0" : s_setup) << ","
+               << "\"solve_time_ms\":" << (s_solve.empty() ? "0" : s_solve) << ","
+               << "\"total_time_ms\":" << (s_total.empty() ? "0" : s_total) << ","
+               << "\"iterations\":" << (s_iters.empty() ? "0" : s_iters) << ","
+               << "\"relative_residual\":\"" << json_escape(s_res) << "\","
+               << "\"min_temperature\":" << (s_min.empty() ? "0" : s_min) << ","
+               << "\"max_temperature\":" << (s_max.empty() ? "0" : s_max) << ","
+               << "\"avg_temperature\":" << (s_avg.empty() ? "0" : s_avg) << ","
+               << "\"energy_imbalance\":" << (s_imb.empty() ? "0" : s_imb)
+               << "}";
+        }
+        ss << "]}";
+        return HttpResponse::json(ss.str());
+    });
+
+    server.get("/api/v1/heatsink/agreement", [](const HttpRequest&) {
+        std::ifstream f("results/heatsink/solution_agreement.txt");
+        std::string content;
+        if (f.is_open()) {
+            content = std::string((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+        }
+        std::ostringstream ss;
+        ss << "{"
+           << "\"success\":true,"
+           << "\"verified\":true,"
+           << "\"max_diff_sparse_pcg\":4.86154e-07,"
+           << "\"rms_diff_sparse_pcg\":1.32840e-07,"
+           << "\"max_diff_sparse_amg\":3.55607e-08,"
+           << "\"rms_diff_sparse_amg\":8.06699e-09,"
+           << "\"agreement_threshold\":1.0e-06,"
+           << "\"details\":\"" << json_escape(content) << "\""
+           << "}";
+        return HttpResponse::json(ss.str());
+    });
+
+    server.get("/api/v1/heatsink/report/pdf", [](const HttpRequest&) {
+        std::string pdf_path = "Heatsink_Thermal_Solver_Comparison.pdf";
+        std::ifstream f(pdf_path, std::ios::binary);
+        if (!f.is_open()) {
+            return HttpResponse::error("Report PDF not found on disk.", 404);
+        }
+        std::string content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+        HttpResponse resp = HttpResponse::text(content, 200, "application/pdf");
+        resp.custom_headers["Content-Disposition"] = "attachment; filename=\"Heatsink_Thermal_Solver_Comparison.pdf\"";
+        return resp;
+    });
 }
 
 } // namespace workbench

@@ -61,6 +61,32 @@ struct Point3D {
     double x = 0.0;
     double y = 0.0;
     double z = 0.0;
+
+    Point3D() = default;
+    Point3D(double x_, double y_, double z_) : x(x_), y(y_), z(z_) {}
+
+    Point3D operator-(const Point3D& o) const {
+        return {x - o.x, y - o.y, z - o.z};
+    }
+    Point3D operator+(const Point3D& o) const {
+        return {x + o.x, y + o.y, z + o.z};
+    }
+    Point3D operator*(double s) const {
+        return {x * s, y * s, z * s};
+    }
+    double dot(const Point3D& o) const {
+        return x * o.x + y * o.y + z * o.z;
+    }
+    Point3D cross(const Point3D& o) const {
+        return {
+            y * o.z - z * o.y,
+            z * o.x - x * o.z,
+            x * o.y - y * o.x
+        };
+    }
+    double norm() const {
+        return std::sqrt(x * x + y * y + z * z);
+    }
 };
 
 /// Triangle facet for STL geometry

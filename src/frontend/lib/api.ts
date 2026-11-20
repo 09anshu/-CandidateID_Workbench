@@ -219,6 +219,61 @@ export interface TestSuiteRunResult {
   tests: TestCaseResult[];
 }
 
+export interface HeatsinkSolveResult {
+  success: boolean;
+  mesh_name: string;
+  solver_name: string;
+  node_count: number;
+  element_count: number;
+  nonzero_count: number;
+  setup_time_ms: number;
+  solve_time_ms: number;
+  total_time_ms: number;
+  iterations: number;
+  relative_residual: number;
+  min_temperature: number;
+  max_temperature: number;
+  avg_temperature: number;
+  peak_memory_bytes: number;
+  energy_imbalance_percent: number;
+  error?: string;
+}
+
+export interface HeatsinkBenchmarkRecord {
+  mesh: string;
+  solver: string;
+  nodes: number;
+  elements: number;
+  nonzeros: number;
+  setup_time_ms: number;
+  solve_time_ms: number;
+  total_time_ms: number;
+  iterations: number;
+  relative_residual: string;
+  min_temperature: number;
+  max_temperature: number;
+  avg_temperature: number;
+  energy_imbalance: number;
+}
+
+export interface HeatsinkBenchmarkResponse {
+  success: boolean;
+  records: HeatsinkBenchmarkRecord[];
+  error?: string;
+}
+
+export interface HeatsinkAgreementResponse {
+  success: boolean;
+  verified: boolean;
+  max_diff_sparse_pcg: number;
+  rms_diff_sparse_pcg: number;
+  max_diff_sparse_amg: number;
+  rms_diff_sparse_amg: number;
+  agreement_threshold: number;
+  details: string;
+  error?: string;
+}
+
 // ---------------------------------------------------------------------------
 // HTTP API Client Implementation
 // ---------------------------------------------------------------------------
@@ -326,5 +381,16 @@ export const api = {
 
   exportTestXmlUrl: () => `${API_BASE}/tests/export/xml`,
   exportTestLogUrl: () => `${API_BASE}/tests/export/log`,
+
+  solveHeatsink: (resolution: string, solver: string) =>
+    fetchJson<HeatsinkSolveResult>(`${API_BASE}/heatsink/solve`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resolution, solver }),
+    }),
+
+  getHeatsinkResults: () => fetchJson<HeatsinkBenchmarkResponse>(`${API_BASE}/heatsink/results`),
+  getHeatsinkAgreement: () => fetchJson<HeatsinkAgreementResponse>(`${API_BASE}/heatsink/agreement`),
+  exportHeatsinkPdfUrl: () => `${API_BASE}/heatsink/report/pdf`,
 };
 

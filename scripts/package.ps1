@@ -1,7 +1,8 @@
-# package.ps1 — Submissions Packaging Script
+﻿# package.ps1 — Submissions Packaging Script
 # Creates CandidateID_Workbench.zip satisfying all assignment delivery requirements
 
 $ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
 $rootDir = (Get-Item $PSScriptRoot).Parent.FullName
 $zipName = "CandidateID_Workbench.zip"
 $zipPath = Join-Path $rootDir $zipName
@@ -25,6 +26,7 @@ $itemsToCopy = @(
     "libwinpthread-1.dll",
     "CMakeLists.txt",
     "README.md",
+    "Heatsink_Thermal_Solver_Comparison.pdf",
     "AGENTS.md",
     "GEMINI.md",
     "CLAUDE.md",

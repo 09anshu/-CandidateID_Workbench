@@ -97,4 +97,14 @@
    - Generated all 12 required pictorial representations in `docs/figures_heatsink/` (CAD model, dimensions, volume mesh, BC schematic, 3 solver contours, architecture flowcharts, execution times, memory scaling, convergence history, mesh scaling).
    - Compiled professional 12-page comprehensive PDF report `Heatsink_Thermal_Solver_Comparison.pdf` at root and `docs/`, featuring 26 detailed technical sections and 6 numerical tables.
 
+10. **Full Project Audit, PDF Text Restoration & Extension Integration (2026-11-21)**:
+   - Executed an exhaustive 18-phase audit covering the frontend, backend, 3D heatsink simulation, three solvers, visualizations, and final PDF report.
+   - Diagnosed and resolved the root cause of missing PDF text in `scripts/generate_heatsink_report_pdf.py`: replaced rigid small bounding rects with a dynamic auto-fitting `draw_text_box` engine with bottom-limit checking. Total character count expanded across all 12 pages (e.g., Page 5 increased from 351 to 3,419 characters), completely eliminating truncated textboxes while maintaining zero overflow beyond page margins.
+   - Verified all 12 pages via high-resolution 150 DPI image rendering in `pdf_pages_inspect/`, ensuring sharp figures, readable captions, unclipped tables, and correct mathematical typography.
+   - Linked `heatsink_mesh.cpp` and `heatsink_solver.cpp` directly into `workbench_backend`, exposing live REST endpoints (`POST /api/v1/heatsink/solve`, `GET /api/v1/heatsink/results`, `GET /api/v1/heatsink/agreement`, `GET /api/v1/heatsink/report/pdf`).
+   - Added dedicated "3D Heatsink (3 Solvers)" tab to Next.js dashboard with interactive mesh/solver selectors, live simulation execution, metrics breakdown, cross-solver consistency banner, and 5-run median benchmark table.
+   - Built and exported fresh static frontend to `ui/`, updated `workbench_backend.exe` at application root, and tested all live endpoints.
+   - Executed both test suites: 43/43 custom tests passed, 28/28 GoogleTest cases passed.
+   - Packaged updated `CandidateID_Workbench.zip` containing all verified components and deliverables.
+
 
