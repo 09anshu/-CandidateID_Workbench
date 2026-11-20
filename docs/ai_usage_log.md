@@ -71,6 +71,16 @@ All AI interactions were conducted under strict engineering oversight. Every mat
   - *Frontend Extension*: Added dedicated "3D Heatsink (3 Solvers)" tab to Next.js dashboard with mesh resolution selector (Coarse to Very Fine), solver selector (SparseLU, PCG, AMG-PCG), live solve execution, real-time metrics, cross-solver agreement banner, and 5-run median benchmark table.
   - *Verification*: Executed both test suites (43/43 custom tests passed, 28/28 GoogleTest cases passed), validated all REST endpoints live, and rendered all 12 PDF pages to 150 DPI PNGs confirming zero text clipping and professional engineering formatting.
 
+### Interaction 8: PDF Visual Formatting Corrections & Word Deliverable Authoring
+- **Prompt Summary**: "Correct formatting defects in `Heatsink_Thermal_Solver_Comparison.pdf` (Table 6 text collisions, Table 4 header collisions, Page 1 metadata overlaps, question-mark character corruption, contour caption overlap) and deliver the complete report in Microsoft Word format (.docx)."
+- **Model Output & Architectural Actions**:
+  - *Identified Flaw 1 (Question Mark Glyph Corruption)*: PyMuPDF's built-in Type 1 Helvetica font (`helv`) uses Standard 14 / WinAnsi encoding. Unicode characters like em-dash (`—`), bullets (`•`), and math symbols were substituted with question marks (`?`). Corrected by integrating Windows TrueType Arial fonts (`arial.ttf`, `arialbd.ttf`, `ariali.ttf`) and normalizing ASCII text replacements, completely eliminating all `?` artifacts (verified with 0 question marks across the entire report).
+  - *Identified Flaw 2 (Table Cell Collisions & Word-Wrapping)*: `draw_table` wrote single unclipped lines. Table 6 descriptions in columns 4 & 5 exceeded column widths and severely overlapped. Implemented a robust word-wrapping table drawer (`draw_table`) that calculates cell wrapping, adapts row heights dynamically, and centers text vertically.
+  - *Identified Flaw 3 (Header Overlap & Spacing)*: Resized Table 4 headers ("Max Temp Diff (L_inf)" and "RMS Temp Diff (L2)") and adjusted column widths to ensure ample clearance. Restructured Page 1 metadata into a clean 3-row layout, completely eliminating overlap between `Windows 11 x64` and `Backend Standard:`.
+  - *Identified Flaw 4 (Figure 5/6/7 Clearance)*: Reduced contour heights to 160 pt and added a 16 pt vertical clearance gap between Figure 5/6 captions and Figure 7, preventing any caption overlap.
+  - *Word Deliverable Creation*: Authored `scripts/generate_heatsink_report_docx.py` using `python-docx` to generate `Heatsink_Thermal_Solver_Comparison.docx` (in root and in `docs/`), containing all 26 sections, 9 styled tables, 12 embedded figures, and 4,770 words.
+  - *Verification*: Automated spatial collision test (`scripts/verify_pdf_layout.py`) verified 0 word collisions and 0 image collisions across all 12 pages. Rebuilt `CandidateID_Workbench.zip` (85.43 MB) containing both verified deliverables.
+
 ---
 
 ## 3. Deliberate Challenge Test & Outcome

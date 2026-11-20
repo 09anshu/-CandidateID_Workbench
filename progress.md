@@ -107,4 +107,13 @@
    - Executed both test suites: 43/43 custom tests passed, 28/28 GoogleTest cases passed.
    - Packaged updated `CandidateID_Workbench.zip` containing all verified components and deliverables.
 
+11. **PDF Visual Formatting Corrections & Word Deliverable Generation (2026-11-21)**:
+   - Fixed character encoding replacement bug: PyMuPDF's built-in Type 1 font replaced non-WinAnsi characters (`—`, `•`) with `?`. Integrated Windows TrueType Arial fonts (`arial.ttf`, `arialbd.ttf`, `ariali.ttf`) and normalized typography, completely eliminating all `?` artifacts.
+   - Corrected Page 1 metadata block text collision by refactoring into a clean 3-row, 4-column layout with explicit spacing.
+   - Overhauled table rendering (`draw_table`) with dynamic word-wrapping and adaptive row heights: completely resolved the text overlap in Table 6 columns 4 & 5, fixed Table 4 header width overlap, and corrected table captions.
+   - Adjusted Page 7 contour heights and figure spacing, providing ample breathing room between Figure 5/6 captions and Figure 7.
+   - Validated PDF layout via automated spatial bounding-box checks (`scripts/verify_pdf_layout.py`): verified 0 word collisions and 0 image-text collisions across all 12 pages.
+   - Implemented `scripts/generate_heatsink_report_docx.py` to author the complete technical report in Microsoft Word format (`Heatsink_Thermal_Solver_Comparison.docx` at root and in `docs/`), including all 26 sections, 6 styled tables, and 12 embedded figures.
+   - Rebuilt `CandidateID_Workbench.zip` (85.43 MB) containing both corrected PDF and DOCX reports in root and `docs/`.
+
 

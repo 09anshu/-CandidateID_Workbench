@@ -27,6 +27,7 @@ $itemsToCopy = @(
     "CMakeLists.txt",
     "README.md",
     "Heatsink_Thermal_Solver_Comparison.pdf",
+    "Heatsink_Thermal_Solver_Comparison.docx",
     "AGENTS.md",
     "GEMINI.md",
     "CLAUDE.md",
