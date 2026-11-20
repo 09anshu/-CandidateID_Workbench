@@ -850,12 +850,6 @@ for ref in refs:
     p12.insert_text(fitz.Point(MARGIN, y), ref, fontsize=7.6, fontname="FReg", color=C_DARK)
     y += 13
 
-y += 6
-# Final Verification Seal Box
-p12.draw_rect(fitz.Rect(MARGIN, y, PAGE_W - MARGIN, y + 36), color=C_PRIMARY, fill=C_LIGHT, width=1.0)
-p12.insert_text(fitz.Point(MARGIN + 15, y + 14), "FINAL DELIVERABLE VERIFICATION & SUBMISSION CONFORMANCE", fontsize=8.5, fontname="FBold", color=C_PRIMARY)
-p12.insert_text(fitz.Point(MARGIN + 15, y + 27), "Standalone Document: Heatsink_Thermal_Solver_Comparison.pdf | Real Experimental Benchmarks | 12 Required Figures Included", fontsize=7.8, fontname="FReg", color=C_DARK)
-
 # Save PDF with compression to both root and docs directory
 doc.save(pdf_path_root, deflate=True, garbage=4, clean=True)
 doc.save(pdf_path_docs, deflate=True, garbage=4, clean=True)

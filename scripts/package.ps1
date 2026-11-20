@@ -1,4 +1,4 @@
-﻿# package.ps1 — Submissions Packaging Script
+# package.ps1 — Submissions Packaging Script
 # Creates CandidateID_Workbench.zip satisfying all assignment delivery requirements
 
 $ErrorActionPreference = "Stop"

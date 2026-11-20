@@ -808,41 +808,6 @@ refs = [
 for ref in refs:
     add_paragraph(doc, ref, space_after=3)
 
-# Final Verification Box
-tbl_ver = doc.add_table(rows=1, cols=1)
-tbl_ver.alignment = WD_TABLE_ALIGNMENT.CENTER
-cell_ver = tbl_ver.cell(0, 0)
-cell_ver.width = Inches(7.0)
-set_cell_background(cell_ver, "F4F7FC")
-set_cell_margins(cell_ver, top=100, bottom=100, left=150, right=150)
-tcPr = cell_ver._tc.get_or_add_tcPr()
-borders_ver = parse_xml(
-    f'<w:tcBorders {nsdecls("w")}>'
-    f'<w:left w:val="single" w:sz="18" w:space="0" w:color="{CLR_PRIMARY_HEX}"/>'
-    f'<w:top w:val="single" w:sz="4" w:space="0" w:color="{CLR_BORDER_HEX}"/>'
-    f'<w:bottom w:val="single" w:sz="4" w:space="0" w:color="{CLR_BORDER_HEX}"/>'
-    f'<w:right w:val="single" w:sz="4" w:space="0" w:color="{CLR_BORDER_HEX}"/>'
-    f'</w:tcBorders>'
-)
-tcPr.append(borders_ver)
-
-p_v1 = cell_ver.paragraphs[0]
-p_v1.paragraph_format.space_before = Pt(0)
-p_v1.paragraph_format.space_after = Pt(2)
-r_v1 = p_v1.add_run("FINAL DELIVERABLE VERIFICATION & SUBMISSION CONFORMANCE")
-r_v1.font.name = "Arial"
-r_v1.font.size = Pt(9.5)
-r_v1.font.bold = True
-r_v1.font.color.rgb = CLR_PRIMARY
-
-p_v2 = cell_ver.add_paragraph()
-p_v2.paragraph_format.space_before = Pt(0)
-p_v2.paragraph_format.space_after = Pt(0)
-r_v2 = p_v2.add_run("Standalone Deliverables: Heatsink_Thermal_Solver_Comparison.docx & Heatsink_Thermal_Solver_Comparison.pdf | Real Computational Benchmarks | All 12 Verified Engineering Figures")
-r_v2.font.name = "Arial"
-r_v2.font.size = Pt(8.5)
-r_v2.font.color.rgb = CLR_DARK
-
 # Save document to root and docs/
 doc.save(docx_path_root)
 doc.save(docx_path_docs)

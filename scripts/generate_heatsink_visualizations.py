@@ -238,13 +238,12 @@ ax.set_zlim([0, 40])
 ax.set_xlabel("Length X (mm)", labelpad=10)
 ax.set_ylabel("Width Y (mm)", labelpad=10)
 ax.set_zlabel("Height Z (mm)", labelpad=10)
-ax.set_title("Figure 5: 3D Steady-State Temperature Contour — Solver 1 (Eigen SparseLU)\n"
-             f"Min: {df_lu['temperature'].min():.2f} °C, Max: {df_lu['temperature'].max():.2f} °C, Avg: {df_lu['temperature'].mean():.2f} °C",
-             pad=20, weight="bold")
+fig.suptitle("Figure 5: 3D Steady-State Temperature Contour — Solver 1 (Eigen SparseLU)", y=0.95, fontsize=11, weight="bold")
+ax.set_title(f"Min: {df_lu['temperature'].min():.2f} °C, Max: {df_lu['temperature'].max():.2f} °C, Avg: {df_lu['temperature'].mean():.2f} °C",
+             pad=8, fontsize=9.5)
 ax.view_init(elev=25, azim=-55)
 ax.set_box_aspect([10, 6, 4])
-plt.tight_layout()
-fig.savefig(os.path.join(OUT_DIR, "fig5_temp_contour_sparse_lu.png"), dpi=300)
+fig.savefig(os.path.join(OUT_DIR, "fig5_temp_contour_sparse_lu.png"), dpi=300, bbox_inches="tight")
 plt.close(fig)
 
 # -------------------------------------------------------------
@@ -264,13 +263,12 @@ ax.set_zlim([0, 40])
 ax.set_xlabel("Length X (mm)", labelpad=10)
 ax.set_ylabel("Width Y (mm)", labelpad=10)
 ax.set_zlabel("Height Z (mm)", labelpad=10)
-ax.set_title("Figure 6: 3D Steady-State Temperature Contour — Solver 2 (Eigen PCG with Incomplete Cholesky)\n"
-             f"Min: {df_pcg['temperature'].min():.2f} °C, Max: {df_pcg['temperature'].max():.2f} °C, Avg: {df_pcg['temperature'].mean():.2f} °C",
-             pad=20, weight="bold")
+fig.suptitle("Figure 6: 3D Steady-State Temperature Contour — Solver 2 (Eigen PCG)", y=0.95, fontsize=11, weight="bold")
+ax.set_title(f"Min: {df_pcg['temperature'].min():.2f} °C, Max: {df_pcg['temperature'].max():.2f} °C, Avg: {df_pcg['temperature'].mean():.2f} °C",
+             pad=8, fontsize=9.5)
 ax.view_init(elev=25, azim=-55)
 ax.set_box_aspect([10, 6, 4])
-plt.tight_layout()
-fig.savefig(os.path.join(OUT_DIR, "fig6_temp_contour_pcg.png"), dpi=300)
+fig.savefig(os.path.join(OUT_DIR, "fig6_temp_contour_pcg.png"), dpi=300, bbox_inches="tight")
 plt.close(fig)
 
 # -------------------------------------------------------------
@@ -290,20 +288,19 @@ ax.set_zlim([0, 40])
 ax.set_xlabel("Length X (mm)", labelpad=10)
 ax.set_ylabel("Width Y (mm)", labelpad=10)
 ax.set_zlabel("Height Z (mm)", labelpad=10)
-ax.set_title("Figure 7: 3D Steady-State Temperature Contour — Solver 3 (AMG-PCG Smoothed Aggregation)\n"
-             f"Min: {df_amg['temperature'].min():.2f} °C, Max: {df_amg['temperature'].max():.2f} °C, Avg: {df_amg['temperature'].mean():.2f} °C",
-             pad=20, weight="bold")
+fig.suptitle("Figure 7: 3D Steady-State Temperature Contour — Solver 3 (AMG-PCG)", y=0.95, fontsize=11, weight="bold")
+ax.set_title(f"Min: {df_amg['temperature'].min():.2f} °C, Max: {df_amg['temperature'].max():.2f} °C, Avg: {df_amg['temperature'].mean():.2f} °C",
+             pad=8, fontsize=9.5)
 ax.view_init(elev=25, azim=-55)
 ax.set_box_aspect([10, 6, 4])
-plt.tight_layout()
-fig.savefig(os.path.join(OUT_DIR, "fig7_temp_contour_amg_pcg.png"), dpi=300)
+fig.savefig(os.path.join(OUT_DIR, "fig7_temp_contour_amg_pcg.png"), dpi=300, bbox_inches="tight")
 plt.close(fig)
 
 # -------------------------------------------------------------
 # Figure 8: Solver Architecture Diagrams
 # -------------------------------------------------------------
 print("Generating Figure 8: Solver Architecture Diagrams...")
-fig, axs = plt.subplots(1, 3, figsize=(15, 6))
+fig, axs = plt.subplots(1, 3, figsize=(15, 6.8))
 
 architectures = [
     ("Solver 1: Direct SparseLU", [
@@ -338,17 +335,17 @@ architectures = [
 ]
 
 for ax, (title, steps, edge_c, fill_c) in zip(axs, architectures):
-    ax.set_title(title, weight="bold", color=edge_c, pad=15)
+    ax.set_title(title, weight="bold", color=edge_c, pad=15, fontsize=11.5)
     ax.set_xlim([0, 10])
-    ax.set_ylim([0, 8.5])
+    ax.set_ylim([-0.8, 8.8])
     ax.axis("off")
 
-    y = 7.5
+    y = 7.6
     for i, step in enumerate(steps):
         is_terminal = (i == len(steps) - 1)
         box_color = edge_c if is_terminal else fill_c
         text_color = "white" if is_terminal else "black"
-        bbox = patches.FancyBboxPatch((0.5, y - 0.7), 9.0, 0.7, boxstyle="round,pad=0.2",
+        bbox = patches.FancyBboxPatch((0.5, y - 0.7), 9.0, 0.7, boxstyle="round,pad=0.25",
                                       ec=edge_c, fc=box_color, lw=1.5)
         ax.add_patch(bbox)
         ax.text(5.0, y - 0.35, step, ha="center", va="center", weight="bold" if is_terminal else "normal",
@@ -358,9 +355,8 @@ for ax, (title, steps, edge_c, fill_c) in zip(axs, architectures):
                         arrowprops=dict(arrowstyle="<-", color=edge_c, lw=1.5))
         y -= 1.15
 
-plt.suptitle("Figure 8: Architectural Flowcharts of the Three Implemented Solvers", y=0.98, weight="bold")
-plt.tight_layout()
-fig.savefig(os.path.join(OUT_DIR, "fig8_solver_architectures.png"), dpi=300)
+plt.suptitle("Figure 8: Architectural Flowcharts of the Three Implemented Solvers", y=0.98, weight="bold", fontsize=13)
+fig.savefig(os.path.join(OUT_DIR, "fig8_solver_architectures.png"), dpi=300, bbox_inches="tight")
 plt.close(fig)
 
 # Load benchmark metrics summary

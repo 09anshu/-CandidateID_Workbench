@@ -116,4 +116,10 @@
    - Implemented `scripts/generate_heatsink_report_docx.py` to author the complete technical report in Microsoft Word format (`Heatsink_Thermal_Solver_Comparison.docx` at root and in `docs/`), including all 26 sections, 6 styled tables, and 12 embedded figures.
    - Rebuilt `CandidateID_Workbench.zip` (85.43 MB) containing both corrected PDF and DOCX reports in root and `docs/`.
 
+12. **Figure 8 Terminal Box Fix, Figure 5-7 Title Centering & Verification Seal Removal (2026-11-21)**:
+   - Corrected Figure 8 flowchart (`fig8_solver_architectures.png`): adjusted `ylim=[-0.8, 8.8]` and `bbox_inches="tight"`, providing 116 pixels of clean margin below the bottom boxes so that the terminal boxes ("Exact Solution x = K^-1 * b", "Iterate until ||r_k||/||b|| < 10^-7", "Outer CG Acceleration") display complete rounded corners and fully closed borders without bottom cropping.
+   - Corrected Figure 5, 6, and 7 title clipping (`fig5_temp_contour_sparse_lu.png`, `fig6_temp_contour_pcg.png`, `fig7_temp_contour_amg_pcg.png`): converted long 3D axes titles into centered `fig.suptitle(..., y=0.95, weight="bold")` with `bbox_inches="tight"`, leaving >100 pixels of clean margin on both sides and completely eliminating left title clipping (`e 6:` / `re 7:`).
+   - Removed the "FINAL DELIVERABLE VERIFICATION & SUBMISSION CONFORMANCE" seal box at the end of both `Heatsink_Thermal_Solver_Comparison.pdf` and `Heatsink_Thermal_Solver_Comparison.docx`.
+   - Re-compiled both reports, confirmed 0 collisions, and packaged updated `CandidateID_Workbench.zip` (76.23 MB).
+
 
